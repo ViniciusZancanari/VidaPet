@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 
-const AgendamentoAula = () => {
+const AgendamentoAula10 = () => {
   return (
     <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
       <View style={styles.grafismo}>
@@ -123,4 +123,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default AgendamentoAula;
+export default AgendamentoAula10;

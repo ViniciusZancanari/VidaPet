@@ -70,8 +70,8 @@ const styles = StyleSheet.create({
 
   },
   grafismo: {
-    width: 100, // Adjust the width as needed
-    height: 100, // Adjust the height as needed
+    width: 100,
+    height: 100, 
     position: 'absolute',
     top: 100,
     left: 0,

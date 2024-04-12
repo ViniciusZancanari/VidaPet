@@ -33,10 +33,11 @@ const AgendamentoAula8 = () => {
       <Text style={styles.subtitle}>
         Passo 3
       </Text>
+      <View style={styles.line }>
       <Text style={styles.instructions}>
         Cole o código e faça o pagamento.{'\n'}O pagamento será confirmado na hora!
       </Text>
-    
+      </View>
       <TouchableOpacity style={styles.chatButton}>
         <Text style={styles.buttonText}>Certo, vamos processeguir!</Text>
       </TouchableOpacity>
@@ -79,8 +80,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 30,
     color: '#FFF',
-    textAlign:'center'
+    textAlign:'center',
+    
 
+  },
+  line:{
+    borderBottomWidth: 2,
+    borderBottomColor: '#F27B61',
+    marginBottom:20
   },
   chatButton: {
     backgroundColor: '#191970',

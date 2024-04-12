@@ -75,6 +75,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 30,
     marginBottom: 50,
+    borderWidth: 3,
+    borderStyle: 'solid',
+    borderColor: '#faac0f' 
   },
 
   buttons: {

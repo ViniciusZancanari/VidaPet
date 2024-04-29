@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, TextInput } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import ProgressBar from '../components/ProgressBar';
 
@@ -35,7 +35,7 @@ const AgendamentoAula9 = () => {
         Tempo para você pagar: {minutes.toString().padStart(2, '0')}:{seconds.toString().padStart(2, '0')} min
       </Text>
       <Text style={styles.instructions}>O tempo para você pagar expira em:</Text>
-      {/* Renderiza a barra de progresso */}
+      <TextInput style={styles.pixNumber} />
       <ProgressBar progress={progress} />
       <TouchableOpacity style={styles.button}>
         <Text style={styles.buttonText}>Copie o código</Text>
@@ -71,6 +71,14 @@ const styles = StyleSheet.create({
     color: '#FFF',
     textAlign: 'center',
   },
+  pixNumber:{
+    borderWidth:1,
+    borderColor:'#f7aaa7',
+    width:200,
+    height:30,
+    marginBottom:10,
+    borderRadius:10
+  },
   button: {
     backgroundColor: '#191970',
     paddingVertical: 10,
@@ -86,7 +94,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
-      },
+  },
   grafismo: {
     width: 100,
     height: 100,

@@ -127,8 +127,8 @@ const styles = StyleSheet.create({
 
   },
   image: {
-    width: 100, // Adjust the width as needed
-    height: 100, // Adjust the height as needed
+    width: 100, 
+    height: 100,
     flex: 1,
     flexDirection: 'row',
     top: 40,

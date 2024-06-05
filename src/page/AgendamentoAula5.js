@@ -18,31 +18,28 @@ const AgendamentoAula5 = () => {
 
       <Text style={styles.title}>Thiago Oliveira Freitas</Text>
       <Text style={styles.subtitle}>Local de encontro:</Text>
-      
+
       <View>
         <TouchableOpacity style={styles.button}>
           <Text style={styles.buttonText}>Utilizar o endereço cadastrado</Text>
         </TouchableOpacity>
         <Text style={styles.title}>ou</Text>
-        <TouchableOpacity >
-          <Text style={styles.marcarButton}>Marcar local de encontro</Text>
-        </TouchableOpacity>
+        <View style={styles.line}>
+          <TouchableOpacity >
+            <Text style={styles.marcarButton}>Marcar local de encontro</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <TextInput
-      style={styles.input}
-      placeholder="Digite um endereço"
-      placeholderTextColor="white"
-      selectionColor="white"
-    />
 
       <View style={styles.rowButton}>
-      <TouchableOpacity style={styles.voltarButton}>
+        <TouchableOpacity style={styles.voltarButton}>
           <Text style={styles.buttonText}>Voltar</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.avancarButton}>
           <Text style={styles.buttonText}>Avançar</Text>
         </TouchableOpacity>
+
       </View>
     </LinearGradient>
   );
@@ -63,8 +60,8 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: '#FFF',
     textAlign: 'center',
-    marginBottom:20
-    
+    marginBottom: 20
+
   },
   subtitle: {
     fontSize: 15,
@@ -72,7 +69,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     color: '#FFF',
     textAlign: 'center',
-    marginBottom:50
+    marginBottom: 50
   },
   subtitle2: {
     fontSize: 15,
@@ -89,20 +86,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 30,
   },
-  marcarButton:{
-    backgroundColor: '#fff',
+  marcarButton: {
+    backgroundColor: '#191970',
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 30,
     borderWidth: 1,
     borderColor: '#000',
-    alignItems: 'center',
-    justifyContent: 'center',
     marginRight: 10,
-    color: '#000',
-    marginBottom:50
+    color: '#fff',
+    marginBottom: 50
   },
-  
+
+  line: {
+    borderBottomWidth: 2,
+    borderBottomColor: '#F27B61',
+    marginBottom: 20
+  },
+
   rowButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -111,7 +112,7 @@ const styles = StyleSheet.create({
     marginBottom: 50,
   },
 
-  voltarButton:{
+  voltarButton: {
     marginRight: 20,
     paddingVertical: 8,
     paddingHorizontal: 30,
@@ -123,7 +124,7 @@ const styles = StyleSheet.create({
     color: '#FFF'
   },
 
-  avancarButton:{
+  avancarButton: {
     backgroundColor: '#191970',
     paddingVertical: 10,
     paddingHorizontal: 50,

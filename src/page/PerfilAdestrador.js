@@ -9,24 +9,25 @@ const PerfilAdestrador = () => {
       <View style={styles.header}>
         <Text style={styles.address}>R. Lorem Ipsum, 100</Text>
         <View style={styles.headerIcons}>
-          <Ionicons name="ios-search" size={24} color="black" style={styles.icon} />
-          <Ionicons name="ios-notifications" size={24} color="black" style={styles.icon} />
+          <Ionicons name="search" size={24} color="black" style={styles.icon} />
+          <Ionicons name="notifications" size={24} color="black" style={styles.icon} />
         </View>
       </View>
-      
-      <TouchableOpacity style={styles.hireButton}>
-        <Text style={styles.hireButtonText}>Quero contratar</Text>
-      </TouchableOpacity>
+
+      <View style={styles.image}>
+        <Image
+          source={require('../../assets/perfil.png')}
+        />
+        <Image
+          source={require('../../assets/grafismo.png')}
+        />
+      </View>
 
       <View style={styles.profileContainer}>
-        <Image
-          source={{ uri: 'https://example.com/trainer.jpg' }} // Coloque a URL da imagem do adestrador aqui
-          style={styles.profileImage}
-        />
         <Text style={styles.name}>Thiago Oliveira Freitas</Text>
         <Text style={styles.reviews}>2 avaliações</Text>
         <View style={styles.locationContainer}>
-          <Ionicons name="ios-location" size={16} color="gray" />
+          <Ionicons name="location" size={16} color="gray" />
           <Text style={styles.location}>São Paulo, SP • 10km</Text>
         </View>
         <Text style={styles.price}>R$50/hora</Text>
@@ -39,20 +40,20 @@ const PerfilAdestrador = () => {
 
       <Text style={styles.sectionTitle}>Confira algumas <Text style={styles.highlight}>fotos:</Text></Text>
       <Image
-        source={{ uri: 'https://example.com/photo.jpg' }} // Coloque a URL da imagem aqui
+        source={require('../../assets/galeria1.png')}
         style={styles.photo}
       />
 
       <Text style={styles.sectionTitle}>Assista ao <Text style={styles.highlight}>vídeo:</Text></Text>
       <Image
-        source={{ uri: 'https://example.com/video.jpg' }} // Coloque a URL da imagem do vídeo aqui
+        source={require('../../assets/galeria2.png')}
         style={styles.video}
       />
 
       <Text style={styles.sectionTitle}>Avaliações de <Text style={styles.highlight}>usuários:</Text></Text>
       <View style={styles.review}>
         <Image
-          source={{ uri: 'https://example.com/user1.jpg' }} // Coloque a URL da imagem do usuário aqui
+          source={require('../../assets/perfil.png')}
           style={styles.reviewImage}
         />
         <View style={styles.reviewContent}>
@@ -63,7 +64,7 @@ const PerfilAdestrador = () => {
       </View>
       <View style={styles.review}>
         <Image
-          source={{ uri: 'https://example.com/user2.jpg' }} // Coloque a URL da imagem do usuário aqui
+          source={require('../../assets/perfil.png')}
           style={styles.reviewImage}
         />
         <View style={styles.reviewContent}>
@@ -76,22 +77,40 @@ const PerfilAdestrador = () => {
       <Text style={styles.sectionTitle}>Quero <Text style={styles.highlight}>contratar!</Text></Text>
       <Text style={styles.sectionSubtitle}>Selecione a opção desejada:</Text>
       <View style={styles.optionContainer}>
-        <LinearGradient colors={['#00BFFF', '#1E90FF']} style={styles.option}>
-          <Text style={styles.optionText}>Avulso • R$50,00/aula</Text>
-        </LinearGradient>
-        <LinearGradient colors={['#FF69B4', '#FF1493']} style={styles.option}>
-          <Text style={styles.optionText}>Mensal • 1x por semana - R$48,00/aula</Text>
-        </LinearGradient>
-        <LinearGradient colors={['#FF69B4', '#FF1493']} style={styles.option}>
+        <TouchableOpacity>
+          <LinearGradient colors={['#00BFFF', '#8A2BE2']} style={styles.option}>
+            <Text style={styles.optionText}>Avulso • R$50,00/aula</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        <TouchableOpacity>
+          <LinearGradient colors={['#E83378', '#F47920']} style={styles.option}>
+            <Text style={styles.optionText}>Mensal • 1x por semana - R$48,00/aula</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        <TouchableOpacity>
+        <LinearGradient colors={['#00BFFF', '#8A2BE2']}style={styles.option}>
           <Text style={styles.optionText}>Mensal • 2x por semana - R$46,00/aula</Text>
         </LinearGradient>
-        <LinearGradient colors={['#FF69B4', '#FF1493']} style={styles.option}>
+        </TouchableOpacity>
+
+        <TouchableOpacity>
+        <LinearGradient colors={['#E83378', '#F47920']} style={styles.option}>
           <Text style={styles.optionText}>Semestral • 1x por semana - R$46,00/aula</Text>
         </LinearGradient>
-        <LinearGradient colors={['#FF69B4', '#FF1493']} style={styles.option}>
+        </TouchableOpacity>
+
+        <TouchableOpacity>
+        <LinearGradient colors={['#00BFFF', '#8A2BE2']} style={styles.option}>
           <Text style={styles.optionText}>Semestral • 2x por semana - R$44,00/aula</Text>
         </LinearGradient>
+        </TouchableOpacity>
+
       </View>
+      <TouchableOpacity>
+
+      </TouchableOpacity>
 
       <TouchableOpacity style={styles.hireButton}>
         <Text style={styles.hireButtonText}>Quero contratar</Text>
@@ -135,6 +154,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+
+  image: {
+    width: 100, // Adjust the width as needed
+    height: 100, // Adjust the height as needed
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    top: 40,
+    left: 0,
+    marginBottom: 50,
+    marginLeft: 100
+  },
+
   profileContainer: {
     alignItems: 'center',
     marginBottom: 20,

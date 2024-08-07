@@ -1,19 +1,17 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Link } from 'expo-router';
 
-
-const AgendamentoAula5 = () => {
+const AgendamentoAula4 = () => {
   return (
     <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
-      <Text style={styles.subtitle}>Você selecionnou o dia<Text style={styles.subtitle2}>17/08/23 às 15h</Text></Text>
+      <Text style={styles.subtitle}>
+        Você selecionou o dia <Text style={styles.subtitle2}>17/08/23 às 15h</Text>
+      </Text>
       <View style={styles.image}>
-        <Image
-          source={require('../../assets/perfil.png')}
-        />
-        <Image
-          source={require('../../assets/grafismo.png')}
-        />
+        <Image source={require('../../../assets/perfil.png')} />
+        <Image source={require('../../../assets/grafismo.png')} />
       </View>
 
       <Text style={styles.title}>Thiago Oliveira Freitas</Text>
@@ -21,30 +19,31 @@ const AgendamentoAula5 = () => {
 
       <View>
         <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Utilizar o endereço cadastrado</Text>
+          <Link style={styles.buttonText} href="/page/Endereco1-1">
+            Utilizar o endereço cadastrado
+          </Link>
         </TouchableOpacity>
         <Text style={styles.title}>ou</Text>
-        <View style={styles.line}>
-          <TouchableOpacity >
-            <Text style={styles.marcarButton}>Marcar local de encontro</Text>
-          </TouchableOpacity>
-        </View>
+
+        <TouchableOpacity style={styles.button}>
+          <Link style={styles.buttonText} href="/page/AgendamentoAula5">
+            Marcar local de encontro
+          </Link>
+        </TouchableOpacity>
       </View>
 
+      <View style={styles.line} />
 
       <View style={styles.rowButton}>
         <TouchableOpacity style={styles.voltarButton}>
-          <Text style={styles.buttonText}>Voltar</Text>
+          <Link style={styles.buttonText} href="/page/AgendamentoAula3">
+            Voltar
+          </Link>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.avancarButton}>
-          <Text style={styles.buttonText}>Avançar</Text>
-        </TouchableOpacity>
-
       </View>
     </LinearGradient>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {
@@ -55,13 +54,11 @@ const styles = StyleSheet.create({
     padding: 20,
     width: '100%',
   },
-
   title: {
     fontSize: 24,
     color: '#FFF',
     textAlign: 'center',
-    marginBottom: 20
-
+    marginBottom: 20,
   },
   subtitle: {
     fontSize: 15,
@@ -69,41 +66,27 @@ const styles = StyleSheet.create({
     marginTop: 20,
     color: '#FFF',
     textAlign: 'center',
-    marginBottom: 50
+    marginBottom: 50,
   },
   subtitle2: {
     fontSize: 15,
     fontWeight: 'bold',
-    marginBottom: 20,
     color: 'yellow',
     textAlign: 'center',
-    marginBottom: 20
+    marginBottom: 20,
   },
-
   button: {
     backgroundColor: '#191970',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 30,
   },
-  marcarButton: {
-    backgroundColor: '#191970',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 30,
-    borderWidth: 1,
-    borderColor: '#000',
-    marginRight: 10,
-    color: '#fff',
-    marginBottom: 50
-  },
-
   line: {
     borderBottomWidth: 2,
     borderBottomColor: '#F27B61',
-    marginBottom: 20
+    marginVertical: 20,
+    width: '100%',
   },
-
   rowButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -111,7 +94,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 50,
   },
-
   voltarButton: {
     marginRight: 20,
     paddingVertical: 8,
@@ -121,9 +103,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#fff',
     marginBottom: 50,
-    color: '#FFF'
+    color: '#FFF',
   },
-
   avancarButton: {
     backgroundColor: '#191970',
     paddingVertical: 10,
@@ -132,23 +113,20 @@ const styles = StyleSheet.create({
     marginBottom: 50,
     borderWidth: 3,
     borderStyle: 'solid',
-    borderColor: '#faac0f'
-
+    borderColor: '#faac0f',
   },
-
   buttonText: {
     color: '#fff',
     fontSize: 16,
-
   },
   image: {
-    width: 100, // Adjust the width as needed
-    height: 100, // Adjust the height as needed
+    width: 100,
+    height: 100,
     flex: 1,
     flexDirection: 'row',
     top: 40,
-    left: 0
-  }
+    left: 0,
+  },
 });
 
-export default AgendamentoAula5;
+export default AgendamentoAula4;

@@ -1,27 +1,30 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-
+import { Link } from 'expo-router';
 
 const VerificarEmail = () => {
   return (
     <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
       <View style={styles.grafismo}>
-      <Image 
-      source={require('../../assets/grafismo.png')}
-      />
+        <Image
+          source={require('../../../assets/grafismo.png')}
+        />
       </View>
       <Text style={styles.title}>Confirme o pedido:</Text>
       <View style={styles.emailIconContainer}>
         <Image
-          source={require('../../assets/email.png')}
+          source={require('../../../assets/email.png')}
         />
       </View>
       <Text style={styles.instructions}>
         Verifiquea seu e-mail e acesse-o para confirmação de seu cadastro em nosso sistema.
       </Text>
       <TouchableOpacity style={styles.button}>
-        <Text style={styles.buttonText}>OK</Text>
+        <Link
+          style={styles.buttonText}
+          href="/page/Home">OK
+        </Link>
       </TouchableOpacity>
     </LinearGradient>
   );
@@ -71,7 +74,7 @@ const styles = StyleSheet.create({
   },
   grafismo: {
     width: 100,
-    height: 100, 
+    height: 100,
     position: 'absolute',
     top: 100,
     left: 0,

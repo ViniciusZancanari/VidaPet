@@ -7,6 +7,8 @@ import {
     TouchableOpacity,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { Link } from 'expo-router';
+
 
 const Endereco1 = () => {
     const [addresses, setAddresses] = useState([
@@ -47,7 +49,10 @@ const Endereco1 = () => {
         <View style={styles.container}>
             <View style={styles.header}>
                 <TouchableOpacity style={styles.backButton}>
-                    <Text style={styles.backButtonText}>{'<'}</Text>
+                    <Link
+                        style={styles.backButtonText}
+                        href="/page/Perfil">{'<'}
+                    </Link>
                 </TouchableOpacity>
                 <View style={styles.headerSpacer} />
                 <Text style={styles.headerText}>ENDEREÇOS</Text>

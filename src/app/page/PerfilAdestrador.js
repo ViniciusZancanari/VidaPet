@@ -1,9 +1,24 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Link } from 'expo-router';
 
 const PerfilAdestrador = () => {
+  const [selectedOption, setSelectedOption] = useState(null);
+
+  const handleOptionPress = (option) => {
+    setSelectedOption(option === selectedOption ? null : option);
+  };
+
+  const options = [
+    { text: 'Avulso • R$50,00/aula', colors: ['#00BFFF', '#8A2BE2'], option: 'avulso' },
+    { text: 'Mensal • 1x por semana - R$48,00/aula', colors: ['#E83378', '#F47920'], option: 'mensal1' },
+    { text: 'Mensal • 2x por semana - R$46,00/aula', colors: ['#00BFFF', '#8A2BE2'], option: 'mensal2' },
+    { text: 'Semestral • 1x por semana - R$46,00/aula', colors: ['#E83378', '#F47920'], option: 'semestral1' },
+    { text: 'Semestral • 2x por semana - R$44,00/aula', colors: ['#00BFFF', '#8A2BE2'], option: 'semestral2' },
+  ];
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.header}>
@@ -15,12 +30,8 @@ const PerfilAdestrador = () => {
       </View>
 
       <View style={styles.image}>
-        <Image
-          source={require('../../assets/perfil.png')}
-        />
-        <Image
-          source={require('../../assets/grafismo.png')}
-        />
+        <Image source={require('../../../assets/perfil.png')} />
+        <Image source={require('../../../assets/grafismo.png')} />
       </View>
 
       <View style={styles.profileContainer}>
@@ -33,29 +44,28 @@ const PerfilAdestrador = () => {
         <Text style={styles.price}>R$50/hora</Text>
       </View>
 
-      <Text style={styles.sectionTitle}>Sobre o <Text style={styles.highlight}>profissional:</Text></Text>
+      <Text style={styles.sectionTitle}>
+        Sobre o <Text style={styles.highlight}>profissional:</Text>
+      </Text>
       <Text style={styles.description}>
         Lorem ipsum dolor sit amet. Et magnam voluptatem et autem internos quo ipsum consequuntur vel corrupti excepturi.
       </Text>
 
-      <Text style={styles.sectionTitle}>Confira algumas <Text style={styles.highlight}>fotos:</Text></Text>
-      <Image
-        source={require('../../assets/galeria1.png')}
-        style={styles.photo}
-      />
+      <Text style={styles.sectionTitle}>
+        Confira algumas <Text style={styles.highlight}>fotos:</Text>
+      </Text>
+      <Image source={require('../../../assets/galeria1.png')} style={styles.photo} />
 
-      <Text style={styles.sectionTitle}>Assista ao <Text style={styles.highlight}>vídeo:</Text></Text>
-      <Image
-        source={require('../../assets/galeria2.png')}
-        style={styles.video}
-      />
+      <Text style={styles.sectionTitle}>
+        Assista ao <Text style={styles.highlight}>vídeo:</Text>
+      </Text>
+      <Image source={require('../../../assets/galeria2.png')} style={styles.video} />
 
-      <Text style={styles.sectionTitle}>Avaliações de <Text style={styles.highlight}>usuários:</Text></Text>
+      <Text style={styles.sectionTitle}>
+        Avaliações de <Text style={styles.highlight}>usuários:</Text>
+      </Text>
       <View style={styles.review}>
-        <Image
-          source={require('../../assets/perfil.png')}
-          style={styles.reviewImage}
-        />
+        <Image source={require('../../../assets/perfil.png')} style={styles.reviewImage} />
         <View style={styles.reviewContent}>
           <Text style={styles.reviewName}>Fernanda Lopes</Text>
           <Text style={styles.reviewDate}>02/04/2024</Text>
@@ -63,10 +73,7 @@ const PerfilAdestrador = () => {
         </View>
       </View>
       <View style={styles.review}>
-        <Image
-          source={require('../../assets/perfil.png')}
-          style={styles.reviewImage}
-        />
+        <Image source={require('../../../assets/perfil.png')} style={styles.reviewImage} />
         <View style={styles.reviewContent}>
           <Text style={styles.reviewName}>Tiago Santiago</Text>
           <Text style={styles.reviewDate}>02/04/2024</Text>
@@ -74,46 +81,27 @@ const PerfilAdestrador = () => {
         </View>
       </View>
 
-      <Text style={styles.sectionTitle}>Quero <Text style={styles.highlight}>contratar!</Text></Text>
+      <Text style={styles.sectionTitle}>
+        Quero <Text style={styles.highlight}>contratar!</Text>
+      </Text>
       <Text style={styles.sectionSubtitle}>Selecione a opção desejada:</Text>
       <View style={styles.optionContainer}>
-        <TouchableOpacity>
-          <LinearGradient colors={['#00BFFF', '#8A2BE2']} style={styles.option}>
-            <Text style={styles.optionText}>Avulso • R$50,00/aula</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-
-        <TouchableOpacity>
-          <LinearGradient colors={['#E83378', '#F47920']} style={styles.option}>
-            <Text style={styles.optionText}>Mensal • 1x por semana - R$48,00/aula</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-
-        <TouchableOpacity>
-        <LinearGradient colors={['#00BFFF', '#8A2BE2']}style={styles.option}>
-          <Text style={styles.optionText}>Mensal • 2x por semana - R$46,00/aula</Text>
-        </LinearGradient>
-        </TouchableOpacity>
-
-        <TouchableOpacity>
-        <LinearGradient colors={['#E83378', '#F47920']} style={styles.option}>
-          <Text style={styles.optionText}>Semestral • 1x por semana - R$46,00/aula</Text>
-        </LinearGradient>
-        </TouchableOpacity>
-
-        <TouchableOpacity>
-        <LinearGradient colors={['#00BFFF', '#8A2BE2']} style={styles.option}>
-          <Text style={styles.optionText}>Semestral • 2x por semana - R$44,00/aula</Text>
-        </LinearGradient>
-        </TouchableOpacity>
-
+        {options.map(({ text, colors, option }) => (
+          <TouchableOpacity key={option} onPress={() => handleOptionPress(option)}>
+            <LinearGradient
+              colors={selectedOption === option || selectedOption === null ? colors : ['#d3d3d3', '#d3d3d3']}
+              style={styles.option}
+            >
+              <Text style={styles.optionText}>{text}</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        ))}
       </View>
-      <TouchableOpacity>
-
-      </TouchableOpacity>
 
       <TouchableOpacity style={styles.hireButton}>
-        <Text style={styles.hireButtonText}>Quero contratar</Text>
+        <Link style={styles.hireButtonText} href="/page/AgendamentoAula1">
+          Quero contratar
+        </Link>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -154,7 +142,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-
   image: {
     width: 100, // Adjust the width as needed
     height: 100, // Adjust the height as needed
@@ -164,9 +151,8 @@ const styles = StyleSheet.create({
     top: 40,
     left: 0,
     marginBottom: 50,
-    marginLeft: 100
+    marginLeft: 100,
   },
-
   profileContainer: {
     alignItems: 'center',
     marginBottom: 20,

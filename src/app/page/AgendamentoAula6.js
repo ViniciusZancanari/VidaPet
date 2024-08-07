@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Link } from 'expo-router';
 
 
 const AgendamentoAula6 = () => {
@@ -9,22 +10,34 @@ const AgendamentoAula6 = () => {
       <Text style={styles.title}>Pagamento pelo aplicativo:</Text>
       <TouchableOpacity style={styles.cartaoButton}>
         <View style={styles.iconButton1}>
-          <Image source={require('../../assets/cartaoCredito.png')} />
-          <Text style={styles.cartaoButtonText}>Cartão de Crédio</Text>
+          <Image source={require('../../../assets/cartaoCredito.png')} />
+          <Link
+            style={styles.cartaoButtonText}
+            href="/page/AgendamentoAula11">Cartão de Crédio
+          </Link>
         </View>
       </TouchableOpacity>
       <TouchableOpacity style={styles.pixButton}>
         <View style={styles.iconButton2}>
-          <Image source={require('../../assets/pix2.png')} />
-          <Text style={styles.cartaoButtonText}>Pix</Text>
+          <Image source={require('../../../assets/pix2.png')} />
+          <Link
+            style={styles.cartaoButtonText}
+            href="/page/AgendamentoAula9">Pix
+          </Link>
         </View>
       </TouchableOpacity>
       <View style={styles.buttons}>
-        <TouchableOpacity style={styles.voltarButton}>
-          <Text style={styles.buttonText}>Voltar</Text>
+      <TouchableOpacity style={styles.voltarButton}>
+          <Link
+            style={styles.buttonText}
+            href="/page/AgendamentoAula5">Voltar
+          </Link>
         </TouchableOpacity>
         <TouchableOpacity style={styles.avancarButton}>
-          <Text style={styles.buttonText}>Avançar</Text>
+          <Link
+            style={styles.buttonText}
+            href="/page/AgendamentoAula7">Avançar
+          </Link>
         </TouchableOpacity>
 
       </View>

@@ -1,20 +1,20 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-
+import { Link } from 'expo-router';
 
 const AgendamentoAula8 = () => {
   return (
     <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
       <View style={styles.grafismo}>
         <Image
-          source={require('../../assets/grafismo.png')}
+          source={require('../../../assets/grafismo.png')}
         />
       </View>
       <View style={styles.pixIconContainer}>
         <Text style={styles.title}>Confirme o Pedido:</Text>
         <Image
-          source={require('../../assets/pix.png')}
+          source={require('../../../assets/pix.png')}
         />
       </View>
       <Text style={styles.title}>Pagamento por Pix:</Text>
@@ -39,7 +39,10 @@ const AgendamentoAula8 = () => {
       </Text>
       </View>
       <TouchableOpacity style={styles.chatButton}>
-        <Text style={styles.buttonText}>Certo, vamos processeguir!</Text>
+          <Link
+            style={styles.buttonText}
+            href="/page/AgendamentoAula9">Certo, vamos processeguir!
+          </Link>
       </TouchableOpacity>
     </LinearGradient>
   );

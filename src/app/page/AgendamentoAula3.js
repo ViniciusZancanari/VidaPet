@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { Link } from 'expo-router';
 
 const AgendamentoAula3 = () => {
   const [selectedDate, setSelectedDate] = useState('17/08/2023');
@@ -20,71 +21,55 @@ const AgendamentoAula3 = () => {
     console.log('Selected Time:', selectedTime);
   };
 
+  const timeSlots = [
+    '08:00', '09:00', '10:00', '11:00',
+    '12:00', '13:00', '14:00', '15:00',
+    '16:00', '17:00', '18:00', '19:00'
+  ];
+
   return (
     <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
       <Text style={styles.subtitle}>Você selecionnou o dia<Text style={styles.subtitle2}>17/08/23 às 15h</Text></Text>
       <View style={styles.image}>
-        <Image
-          source={require('../../assets/perfil.png')}
-        />
-        <Image
-          source={require('../../assets/grafismo.png')}
-        />
+        <Image source={require('../../../assets/perfil.png')} />
+        <Image source={require('../../../assets/grafismo.png')} />
       </View>
 
       <Text style={styles.title}>Thiago Oliveira Freitas</Text>
       <Text style={styles.subtitle}>Você escolheu o plano <Text style={styles.subtitle2}>avulso</Text></Text>
-
 
       <TouchableOpacity style={styles.button} onPress={() => handleDateChange('17/08/2023')}>
         <Text style={styles.buttonText}>{selectedDate}</Text>
       </TouchableOpacity>
 
       <View style={styles.timeGrid}>
-        <TouchableOpacity style={styles.timeButton} onPress={() => handleTimeChange('08:00')}>
-          <Text style={styles.timeButtonText}>08:00</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.timeButton} onPress={() => handleTimeChange('09:00')}>
-          <Text style={styles.timeButtonText}>09:00</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.timeButton} onPress={() => handleTimeChange('10:00')}>
-          <Text style={styles.timeButtonText}>10:00</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.timeButton} onPress={() => handleTimeChange('11:00')}>
-          <Text style={styles.timeButtonText}>11:00</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.timeButton} onPress={() => handleTimeChange('12:00')}>
-          <Text style={styles.timeButtonText}>12:00</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.timeButton} onPress={() => handleTimeChange('13:00')}>
-          <Text style={styles.timeButtonText}>13:00</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.timeButton} onPress={() => handleTimeChange('14:00')}>
-          <Text style={styles.timeButtonText}>14:00</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.timeButton} onPress={() => handleTimeChange('15:00')}>
-          <Text style={styles.timeButtonText}>15:00</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.timeButton} onPress={() => handleTimeChange('16:00')}>
-          <Text style={styles.timeButtonText}>16:00</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.timeButton} onPress={() => handleTimeChange('17:00')}>
-          <Text style={styles.timeButtonText}>17:00</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.timeButton} onPress={() => handleTimeChange('18:00')}>
-          <Text style={styles.timeButtonText}>18:00</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.timeButton} onPress={() => handleTimeChange('19:00')}>
-          <Text style={styles.timeButtonText}>19:00</Text>
-        </TouchableOpacity>
+        {timeSlots.map((time) => (
+          <TouchableOpacity
+            key={time}
+            style={[
+              styles.timeButton,
+              selectedTime === time && styles.timeButtonSelected
+            ]}
+            onPress={() => handleTimeChange(time)}
+          >
+            <Text
+              style={[
+                styles.timeButtonText,
+                selectedTime === time && styles.timeButtonTextSelected
+              ]}
+            >
+              {time}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       <View style={styles.rowButton}>
         <TouchableOpacity style={styles.voltarButton}>
-          <Text style={styles.buttonText}>Voltar</Text>
+          <Link style={styles.buttonText} href="/page/AgendamentoAula1">Voltar</Link>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.avancarButton}>
-          <Text style={styles.buttonText}>Avançar</Text>
+        <TouchableOpacity style={styles.avancarButton} onPress={handleContinue}>
+          <Link style={styles.buttonText} href="/page/AgendamentoAula4">Avançar</Link>
         </TouchableOpacity>
       </View>
     </LinearGradient>
@@ -100,7 +85,6 @@ const styles = StyleSheet.create({
     padding: 20,
     width: '100%',
   },
-
   image: {
     width: 100, // Adjust the width as needed
     height: 100, // Adjust the height as needed
@@ -108,15 +92,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     top: 40,
     left: 0,
-    marginBottom:150
+    marginBottom: 150,
   },
-
   title: {
     fontSize: 24,
     color: '#FFF',
     textAlign: 'center',
-    marginBottom:20
-    
+    marginBottom: 20,
   },
   subtitle: {
     fontSize: 15,
@@ -124,7 +106,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     color: '#FFF',
     textAlign: 'center',
-    marginBottom:50
+    marginBottom: 50,
   },
   subtitle2: {
     fontSize: 15,
@@ -132,7 +114,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     color: 'yellow',
     textAlign: 'center',
-    marginBottom: 20
+    marginBottom: 20,
   },
   dateButton: {
     backgroundColor: '#007bff',
@@ -163,8 +145,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  timeButtonSelected: {
+    backgroundColor: '#0000FF',
+    borderColor: '#0000FF',
+  },
   timeButtonText: {
     fontSize: 14,
+    color: '#FFF',
+  },
+  timeButtonTextSelected: {
     color: '#FFF',
   },
   buttonContainer: {
@@ -185,13 +174,13 @@ const styles = StyleSheet.create({
     width: '48%',
   },
   button: {
-    width:300,
+    width: 300,
     backgroundColor: '#191970',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 30,
-    alignItems:'center',
-    marginBottom:20
+    alignItems: 'center',
+    marginBottom: 20,
   },
   buttonText: {
     fontSize: 16,
@@ -206,7 +195,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 50,
   },
-
   voltarButton: {
     marginRight: 20,
     paddingVertical: 8,
@@ -216,9 +204,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#fff',
     marginBottom: 50,
-    color: '#FFF'
+    color: '#FFF',
   },
-
   avancarButton: {
     backgroundColor: '#191970',
     paddingVertical: 10,
@@ -227,14 +214,12 @@ const styles = StyleSheet.create({
     marginBottom: 50,
     borderWidth: 3,
     borderStyle: 'solid',
-    borderColor: '#faac0f'
-
+    borderColor: '#faac0f',
   },
-
   buttonText: {
     color: '#fff',
     fontSize: 16,
-  }
+  },
 });
 
 export default AgendamentoAula3;

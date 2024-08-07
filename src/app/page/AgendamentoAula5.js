@@ -1,42 +1,45 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, TextInput } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Link } from 'expo-router';
 
 
-const AgendamentoAula4 = () => {
+const AgendamentoAula5 = () => {
   return (
     <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
       <Text style={styles.subtitle}>Você selecionnou o dia<Text style={styles.subtitle2}>17/08/23 às 15h</Text></Text>
       <View style={styles.image}>
         <Image
-          source={require('../../assets/perfil.png')}
+          source={require('../../../assets/perfil.png')}
         />
         <Image
-          source={require('../../assets/grafismo.png')}
+          source={require('../../../assets/grafismo.png')}
         />
       </View>
 
       <Text style={styles.title}>Thiago Oliveira Freitas</Text>
       <Text style={styles.subtitle}>Local de encontro:</Text>
-      
-      <View>
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Utilizar o endereço cadastrado</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>ou</Text>
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Marcar local de encontro</Text>
-        </TouchableOpacity>
+
+
+      <View style={styles.line}>
+        <TextInput placeholder='Digete um endereço:'></TextInput>
       </View>
 
-      
+
       <View style={styles.rowButton}>
-      <TouchableOpacity style={styles.voltarButton}>
-          <Text style={styles.buttonText}>Voltar</Text>
+        <TouchableOpacity style={styles.voltarButton}>
+          <Link
+            style={styles.buttonText}
+            href="/page/AgendamentoAula4">Voltar
+          </Link>
         </TouchableOpacity>
         <TouchableOpacity style={styles.avancarButton}>
-          <Text style={styles.buttonText}>Avançar</Text>
+          <Link
+            style={styles.buttonText}
+            href="/page/AgendamentoAula6">Avançar
+          </Link>
         </TouchableOpacity>
+
       </View>
     </LinearGradient>
   );
@@ -57,8 +60,8 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: '#FFF',
     textAlign: 'center',
-    marginBottom:20
-    
+    marginBottom: 20
+
   },
   subtitle: {
     fontSize: 15,
@@ -66,7 +69,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     color: '#FFF',
     textAlign: 'center',
-    marginBottom:50
+    marginBottom: 50
   },
   subtitle2: {
     fontSize: 15,
@@ -83,6 +86,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 30,
   },
+  marcarButton: {
+    backgroundColor: '#191970',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: '#000',
+    marginRight: 10,
+    color: '#fff',
+    marginBottom: 50
+  },
+
   line: {
     borderBottomWidth: 2,
     borderBottomColor: '#F27B61',
@@ -97,7 +112,7 @@ const styles = StyleSheet.create({
     marginBottom: 50,
   },
 
-  voltarButton:{
+  voltarButton: {
     marginRight: 20,
     paddingVertical: 8,
     paddingHorizontal: 30,
@@ -109,7 +124,7 @@ const styles = StyleSheet.create({
     color: '#FFF'
   },
 
-  avancarButton:{
+  avancarButton: {
     backgroundColor: '#191970',
     paddingVertical: 10,
     paddingHorizontal: 50,
@@ -127,8 +142,8 @@ const styles = StyleSheet.create({
 
   },
   image: {
-    width: 100, 
-    height: 100,
+    width: 100, // Adjust the width as needed
+    height: 100, // Adjust the height as needed
     flex: 1,
     flexDirection: 'row',
     top: 40,
@@ -136,4 +151,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default AgendamentoAula4;
+export default AgendamentoAula5;

@@ -1,13 +1,14 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { Link } from 'expo-router';
 
 const AgendamentoAula12 = () => {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Cartão de crédito</Text>
             <View style={styles.iconsContainer}>
-                <Image source={require('../../assets/visa.png')} style={styles.icon} />
-                <Image source={require('../../assets/mastercard.png')} style={styles.icon} />
+                <Image source={require('../../../assets/visa.png')} style={styles.icon} />
+                <Image source={require('../../../assets/mastercard.png')} style={styles.icon} />
             </View>
             <TextInput style={styles.input} placeholder="Número de cartão" placeholderTextColor="#FFF" />
             <View style={styles.row}>
@@ -20,11 +21,18 @@ const AgendamentoAula12 = () => {
 
             <View style={styles.buttons}>
                 <TouchableOpacity style={styles.voltarButton}>
-                    <Text style={styles.buttonText}>Voltar</Text>
+                    <Link 
+                        style={styles.buttonText}
+                        href="/page/AgendamentoAula11">Voltar
+                    </Link>
+
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.salvarButton}>
-                    <Text style={styles.buttonText}>Salvar</Text>
+                    <Link
+                        style={styles.buttonText}
+                        href="/page/AgendamentoAula11">Salvar
+                    </Link>
                 </TouchableOpacity>
             </View>
         </View>

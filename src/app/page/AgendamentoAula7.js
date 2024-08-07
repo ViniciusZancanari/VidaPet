@@ -1,20 +1,20 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-
+import { Link } from 'expo-router';
 
 const AgendamentoAula7 = () => {
   return (
     <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
       <View style={styles.grafismo}>
         <Image
-          source={require('../../assets/grafismo.png')}
+          source={require('../../../assets/grafismo.png')}
         />
       </View>
       <View style={styles.pixIconContainer}>
         <Text style={styles.title}>Confirme o Pedido:</Text>
         <Image
-          source={require('../../assets/profissional.png')}
+          source={require('../../../assets/profissional.png')}
         />
       </View>
       <View style={styles.line}>
@@ -24,7 +24,7 @@ const AgendamentoAula7 = () => {
         </Text>
       </View>
       <Image
-        source={require('../../assets/data.png')}
+        source={require('../../../assets/data.png')}
       />
       <View style={styles.line}>
         <Text style={styles.subtitle}>Data/Horário:</Text>
@@ -33,7 +33,7 @@ const AgendamentoAula7 = () => {
         </Text>
       </View>
       <Image
-        source={require('../../assets/local.png')}
+        source={require('../../../assets/local.png')}
       />
       <View style={styles.line}>
         <Text style={styles.subtitle}>Local do Encontro:</Text>
@@ -43,10 +43,16 @@ const AgendamentoAula7 = () => {
       </View>
       <View style={styles.buttons}>
         <TouchableOpacity style={styles.dadosButton}>
-          <Text style={styles.buttonText}>Alterar Dados</Text>
+          <Link
+            style={styles.buttonText}
+            href="/page/AgendamentoAula1">Alterar Dados
+          </Link>
         </TouchableOpacity>
         <TouchableOpacity style={styles.confirmarButton}>
-          <Text style={styles.buttonText}>Confirmar</Text>
+          <Link
+            style={styles.buttonText}
+            href="/page/AgendamentoAula8">Confirmar
+          </Link>
         </TouchableOpacity>
 
       </View>

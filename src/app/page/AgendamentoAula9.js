@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, TextInput } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import ProgressBar from '../components/ProgressBar';
+import ProgressBar from '../../components/ProgressBar';
+import { Link } from 'expo-router';
+
 
 const AgendamentoAula9 = () => {
-  const [countdown, setCountdown] = useState(480); // 8 hours in seconds
+  const [countdown, setCountdown] = useState(480); // 8 h em segundos
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -23,11 +25,11 @@ const AgendamentoAula9 = () => {
   return (
     <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
       <View style={styles.grafismo}>
-        <Image source={require('../../assets/grafismo.png')} />
+        <Image source={require('../../../assets/grafismo.png')} />
       </View>
       <View style={styles.pixIconContainer}>
         <Text style={styles.title}>Confirme o Pedido:</Text>
-        <Image source={require('../../assets/segurando o celular com pix.png')} />
+        <Image source={require('../../../assets/segurando o celular com pix.png')} />
       </View>
       <Text style={styles.title}>Pedido aguardando pagamento</Text>
       <Text style={styles.instructions}>Pedido aguardando pagamento Copie o código abaixo e escolha a opção “Pix Copia e Cola” no app do seu banco para fazer o pagamento:</Text>
@@ -38,7 +40,10 @@ const AgendamentoAula9 = () => {
       <TextInput style={styles.pixNumber} />
       <ProgressBar progress={progress} />
       <TouchableOpacity style={styles.button}>
-        <Text style={styles.buttonText}>Copie o código</Text>
+        <Link
+          style={styles.buttonText}
+          href="/page/AgendamentoAula10">Copie o código
+        </Link>
       </TouchableOpacity>
     </LinearGradient>
   );
@@ -71,13 +76,13 @@ const styles = StyleSheet.create({
     color: '#FFF',
     textAlign: 'center',
   },
-  pixNumber:{
-    borderWidth:1,
-    borderColor:'#f7aaa7',
-    width:200,
-    height:30,
-    marginBottom:10,
-    borderRadius:10
+  pixNumber: {
+    borderWidth: 1,
+    borderColor: '#f7aaa7',
+    width: 200,
+    height: 30,
+    marginBottom: 10,
+    borderRadius: 10
   },
   button: {
     backgroundColor: '#191970',

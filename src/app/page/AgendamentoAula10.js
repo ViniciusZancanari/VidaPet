@@ -1,19 +1,19 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-
+import { Link } from 'expo-router';
 
 const AgendamentoAula10 = () => {
   return (
     <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
       <View style={styles.grafismo}>
         <Image
-          source={require('../../assets/grafismo.png')}
+          source={require('../../../assets/grafismo.png')}
         />
       </View>
       <View style={styles.checkIconContainer}>
         <Image
-          source={require('../../assets/check.png')}
+          source={require('../../../assets/check.png')}
         />
       </View>
       <Text style={styles.title}>Solicitação enviada com sucesso!</Text>
@@ -21,15 +21,23 @@ const AgendamentoAula10 = () => {
         Enviaremos um e-mail para você assim que o profissional escolhido confirmar o(s) agendamento(s). Obrigado!
       </Text>
       <TouchableOpacity style={styles.chatButton}>
-        <Text style={styles.buttonText}>Chat - Tire dúvidas com o adestrador</Text>
+        <Link
+          style={styles.buttonText}
+          href="/page/Chat-Conversa">Chat - Tire dúvidas com o adestrador
+        </Link>
       </TouchableOpacity>
 
       <View style={styles.buttons}>
         <TouchableOpacity style={styles.voltarButton}>
-          <Text style={styles.buttonText}>Voltar</Text>
+          <Link
+            style={styles.buttonText}
+            href="/page/AgendamentoAula9">Voltar
+          </Link>
         </TouchableOpacity>
         <TouchableOpacity style={styles.pefilButton}>
-          <Text>Perfil do adestrador</Text>
+          <Link
+            href="/page/PerfilAdestrador">Perfil do adestrador
+          </Link>
         </TouchableOpacity>
       </View>
     </LinearGradient>
@@ -59,14 +67,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
     color: '#FFF',
-    textAlign:'center'
+    textAlign: 'center'
   },
   instructions: {
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 30,
     color: '#FFF',
-    textAlign:'center'
+    textAlign: 'center'
 
   },
   chatButton: {
@@ -77,7 +85,7 @@ const styles = StyleSheet.create({
     marginBottom: 50,
     borderWidth: 3,
     borderStyle: 'solid',
-    borderColor: '#faac0f' 
+    borderColor: '#faac0f'
   },
 
   buttons: {
@@ -109,7 +117,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 10,
     color: '#000',
-    marginBottom:50
+    marginBottom: 50
   },
   buttonText: {
     color: '#fff',

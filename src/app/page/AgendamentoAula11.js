@@ -1,61 +1,64 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Link } from 'expo-router';
 
-const FormasDePagamento = () => {
+const AgendamentoAula11 = () => {
 
     return (
-        <View style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity style={styles.backButton}>
-                    <Text style={styles.backButtonText}>{'<'}</Text>
-                </TouchableOpacity>
-                <View style={styles.headerSpacer} />
-                <Text style={styles.headerText}>FORMAS DE PAGAMENTO</Text>
-                <View style={styles.headerSpacer} />
-            </View>
-
+        <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
+            <Text style={styles.header}>Cartão de Crédito</Text>
             <TouchableOpacity style={styles.cartoes} >
                 <Image
-                    source={require('../../assets/visa.png')}
+                    source={require('../../../assets/visa.png')}
                 />
-                <View style={styles.cartao}>
-                    <Text>Visa - Crédito</Text>
-                    <Text>00000000</Text>
-                </View>
+                <Link style={styles.cartao} href="/page/AgendamentoAula7">
+                    <View>
+                        <Text style={styles.cartaoTitle}>Visa - Crédito</Text>
+                        <Text style={styles.cartaoNumber}>000000000000</Text>
+                    </View>
+                </Link>
 
                 <View style={styles.cardActions}>
                     <TouchableOpacity style={styles.iconButton}>
-                        <Image source={require('../../assets/editar.png')} style={styles.icon} />
+                        <Image source={require('../../../assets/editar.png')} style={styles.icon} />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.iconButton}>
-                        <Image source={require('../../assets/lixeira.png')} style={styles.icon} />
+                        <Image source={require('../../../assets/lixeira.png')} style={styles.icon} />
                     </TouchableOpacity>
                 </View>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.cartoes} >
                 <Image
-                    source={require('../../assets/mastercard.png')}
+                    source={require('../../../assets/mastercard.png')}
                 />
-                <View style={styles.cartao}>
-                    <Text>Mastercard - Crédito</Text>
-                    <Text>00000000</Text>
-                </View>
+
+                <Link style={styles.cartao} href="/page/AgendamentoAula7">
+                    <View>
+                        <Text style={styles.cartaoTitle}>Mastercard - Crédito</Text>
+                        <Text style={styles.cartaoNumber}>000000000000</Text>
+                    </View>
+                </Link>
 
                 <View style={styles.cardActions}>
                     <TouchableOpacity style={styles.iconButton}>
-                        <Image source={require('../../assets/editar.png')} style={styles.icon} />
+                        <Image source={require('../../..//assets/editar.png')} style={styles.icon} />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.iconButton}>
-                        <Image source={require('../../assets/lixeira.png')} style={styles.icon} />
+                        <Image source={require('../../../assets/lixeira.png')} style={styles.icon} />
                     </TouchableOpacity>
                 </View>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.button} >
-                <Text style={styles.buttonText}>Adicionar Cartão</Text>
+
+                <Link style={styles.buttonText} 
+                href="/page/AgendamentoAula12"> 
+                Cadastrar novo cartão
+                </Link>
             </TouchableOpacity>
-        </View>
+        </LinearGradient >
     );
 };
 
@@ -64,32 +67,13 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 20,
     },
+
     header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 20,
-        padding: 20,
-        borderBottomWidth: 2,
-        borderBottomColor: '#ccc',
-        justifyContent: 'center',
-    },
-    backButton: {
-        position: 'absolute',
-        left: 20,
-        padding: 10,
-    },
-    backButtonText: {
-        fontSize: 20,
-        color: '#EF5C43',
-    },
-    headerSpacer: {
-        flex: 1,
-    },
-    headerText: {
+        color: 'white',
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#315381',
-        textAlign: 'center',
+        marginBottom: 10,
+        alignItems: 'baseline'
     },
 
     cartoes: {
@@ -142,4 +126,4 @@ const styles = StyleSheet.create({
 
 });
 
-export default FormasDePagamento;
+export default AgendamentoAula11;

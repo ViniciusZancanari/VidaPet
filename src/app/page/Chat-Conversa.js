@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-
+import { Link } from 'expo-router';
 
 const messages = [
   {
@@ -36,15 +36,18 @@ const ChatConversa = () => {
 
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton}>
-          <Text style={styles.backButtonText}>{'<'}</Text>
+          <Link
+            style={styles.backButtonText}
+            href="/page/Chat">{'<'}
+          </Link>
         </TouchableOpacity>
         <View style={styles.headerSpacer} />
         <Image
-           source={require('../../assets/perfil.png')}
+          source={require('../../../assets/perfil.png')}
           style={styles.profilePic}
         />
         <Text style={styles.name}>Thiago Oliveira Freitas</Text>
-          <Text style={styles.role}>Adestrador</Text>
+        <Text style={styles.role}>Adestrador</Text>
       </View>
 
       <View style={styles.dateContainer}>

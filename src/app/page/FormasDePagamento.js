@@ -1,16 +1,26 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Link } from 'expo-router';
 
-
-const AgendamentoAula11 = () => {
+const FormasDePagamento = () => {
 
     return (
-        <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
-            <Text style={styles.header}>Cartão de Crédito</Text>
+        <View style={styles.container}>
+            <View style={styles.header}>
+                <TouchableOpacity style={styles.backButton}>
+                    <Link
+                        style={styles.backButtonText}
+                        href="/page/Perfil">{'<'}
+                    </Link>
+                </TouchableOpacity>
+                <View style={styles.headerSpacer} />
+                <Text style={styles.headerText}>FORMAS DE PAGAMENTO</Text>
+                <View style={styles.headerSpacer} />
+            </View>
+
             <TouchableOpacity style={styles.cartoes} >
                 <Image
-                    source={require('../../assets/visa.png')}
+                    source={require('../../../assets/visa.png')}
                 />
                 <View style={styles.cartao}>
                     <Text>Visa - Crédito</Text>
@@ -19,17 +29,17 @@ const AgendamentoAula11 = () => {
 
                 <View style={styles.cardActions}>
                     <TouchableOpacity style={styles.iconButton}>
-                        <Image source={require('../../assets/editar.png')} style={styles.icon} />
+                        <Image source={require('../../../assets/editar.png')} style={styles.icon} />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.iconButton}>
-                        <Image source={require('../../assets/lixeira.png')} style={styles.icon} />
+                        <Image source={require('../../../assets/lixeira.png')} style={styles.icon} />
                     </TouchableOpacity>
                 </View>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.cartoes} >
                 <Image
-                    source={require('../../assets/mastercard.png')}
+                    source={require('../../../assets/mastercard.png')}
                 />
                 <View style={styles.cartao}>
                     <Text>Mastercard - Crédito</Text>
@@ -38,18 +48,24 @@ const AgendamentoAula11 = () => {
 
                 <View style={styles.cardActions}>
                     <TouchableOpacity style={styles.iconButton}>
-                        <Image source={require('../../assets/editar.png')} style={styles.icon} />
+                        <Image source={require('../../../assets/editar.png')} style={styles.icon} />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.iconButton}>
-                        <Image source={require('../../assets/lixeira.png')} style={styles.icon} />
+                        <Image source={require('../../../assets/lixeira.png')} style={styles.icon} />
                     </TouchableOpacity>
                 </View>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.button} >
-                <Text style={styles.buttonText}>Adicionar Cartão</Text>
+                <Link
+                    style={styles.buttonText}
+                    href={'/page/AgendamentoAula11'}
+                    >Adicionar Cartão
+                </Link>
+
+
             </TouchableOpacity>
-        </LinearGradient >
+        </View>
     );
 };
 
@@ -58,13 +74,32 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 20,
     },
-
     header: {
-        color: 'white',
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 20,
+        padding: 20,
+        borderBottomWidth: 2,
+        borderBottomColor: '#ccc',
+        justifyContent: 'center',
+    },
+    backButton: {
+        position: 'absolute',
+        left: 20,
+        padding: 10,
+    },
+    backButtonText: {
+        fontSize: 20,
+        color: '#EF5C43',
+    },
+    headerSpacer: {
+        flex: 1,
+    },
+    headerText: {
         fontSize: 20,
         fontWeight: 'bold',
-        marginBottom: 10,
-        alignItems:'baseline'
+        color: '#315381',
+        textAlign: 'center',
     },
 
     cartoes: {
@@ -117,4 +152,4 @@ const styles = StyleSheet.create({
 
 });
 
-export default AgendamentoAula11;
+export default FormasDePagamento;

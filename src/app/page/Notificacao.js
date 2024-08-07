@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Link } from 'expo-router';
+
 
 const NotificationItem = ({ title, time }) => {
     return (
@@ -30,7 +32,10 @@ const Notificacao = () => {
         <View style={styles.container}>
             <View style={styles.header}>
                 <TouchableOpacity style={styles.backButton}>
-                    <Text style={styles.backButtonText}>{'<'}</Text>
+                    <Link
+                        style={styles.backButtonText}
+                        href="/page/Perfil">{'<'}
+                    </Link>
                 </TouchableOpacity>
                 <View style={styles.headerSpacer} />
                 <Text style={styles.headerText}>NOTIFICAÇÕES</Text>

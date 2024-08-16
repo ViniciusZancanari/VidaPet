@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@react-native-community/slider": "^4.4.2",
+    "axios": "^1.7.3",
     "expo": "~50.0.14",
     "expo-checkbox": "~2.7.0",
     "expo-linear-gradient": "~12.7.2",

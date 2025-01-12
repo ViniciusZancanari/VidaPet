@@ -4,7 +4,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ProgressBar from '../../components/ProgressBar';
 import { Link } from 'expo-router';
 
-
 const AgendamentoAula9 = () => {
   const [countdown, setCountdown] = useState(480); // 8 h em segundos
 
@@ -24,25 +23,39 @@ const AgendamentoAula9 = () => {
 
   return (
     <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
+      {/* X no canto superior para voltar à página PerfilAdestrador */}
+      <View style={styles.header}>
+        <Link href="/page/PerfilAdestrador">
+          <Text style={styles.closeButtonText}>X</Text>
+        </Link>
+      </View>
+
       <View style={styles.grafismo}>
         <Image source={require('../../../assets/grafismo.png')} />
       </View>
+
       <View style={styles.pixIconContainer}>
         <Text style={styles.title}>Confirme o Pedido:</Text>
         <Image source={require('../../../assets/segurando o celular com pix.png')} />
       </View>
+
       <Text style={styles.title}>Pedido aguardando pagamento</Text>
-      <Text style={styles.instructions}>Pedido aguardando pagamento Copie o código abaixo e escolha a opção “Pix Copia e Cola” no app do seu banco para fazer o pagamento:</Text>
+      <Text style={styles.instructions}>
+        Pedido aguardando pagamento. Copie o código abaixo e escolha a opção “Pix Copia e Cola” no app do seu banco para fazer o pagamento:
+      </Text>
       <Text style={styles.instructions}>
         Tempo para você pagar: {minutes.toString().padStart(2, '0')}:{seconds.toString().padStart(2, '0')} min
       </Text>
       <Text style={styles.instructions}>O tempo para você pagar expira em:</Text>
       <TextInput style={styles.pixNumber} />
       <ProgressBar progress={progress} />
+      
       <TouchableOpacity style={styles.button}>
         <Link
           style={styles.buttonText}
-          href="/page/AgendamentoAula10">Copie o código
+          href="/page/AgendamentoAula10"
+        >
+          Copie o código
         </Link>
       </TouchableOpacity>
     </LinearGradient>
@@ -57,6 +70,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
     width: '100%',
+  },
+  header: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+  },
+  closeButtonText: {
+    fontSize: 24,
+    color: '#fff',
+    fontWeight: 'bold',
   },
   pixIconContainer: {
     marginBottom: 20,
@@ -82,7 +105,7 @@ const styles = StyleSheet.create({
     width: 200,
     height: 30,
     marginBottom: 10,
-    borderRadius: 10
+    borderRadius: 10,
   },
   button: {
     backgroundColor: '#191970',

@@ -1,15 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link } from 'expo-router';
+import axios from 'axios';
+import Constants from 'expo-constants'; // Para capturar as informações do dispositivo
 
 const PerfilAdestrador = () => {
   const [selectedOption, setSelectedOption] = useState(null);
+  const [trainer, setTrainer] = useState(null); // Estado para armazenar os dados do treinador
+  const [ip, setIp] = useState(Constants.manifest2?.extra?.localhost || '192.168.0.6'); // Defina o IP dinamicamente ou use um padrão
 
   const handleOptionPress = (option) => {
     setSelectedOption(option === selectedOption ? null : option);
   };
+
+  // Busca os dados do treinador quando o componente é carregado
+  useEffect(() => {
+    axios.get(`http://${ip}:3000/trainer/6194a177-923d-4c03-8504-2ef51df5992e`) // Usa o IP dinâmico
+      .then(response => {
+        setTrainer(response.data); // Armazena os dados no estado
+      })
+      .catch(error => {
+        console.error('Erro ao buscar o treinador:', error);
+      });
+  }, [ip]); // O efeito depende do IP
 
   const options = [
     { text: 'Avulso • R$50,00/aula', colors: ['#00BFFF', '#8A2BE2'], option: 'avulso' },
@@ -22,7 +37,8 @@ const PerfilAdestrador = () => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.address}>R. Lorem Ipsum, 100</Text>
+        {/* Exibe o endereço dinamicamente se disponível */}
+        <Text style={styles.address}>{trainer ? trainer.address : 'Carregando endereço...'}</Text>
         <View style={styles.headerIcons}>
           <Ionicons name="search" size={24} color="black" style={styles.icon} />
           <Ionicons name="notifications" size={24} color="black" style={styles.icon} />
@@ -35,20 +51,24 @@ const PerfilAdestrador = () => {
       </View>
 
       <View style={styles.profileContainer}>
-        <Text style={styles.name}>Thiago Oliveira Freitas</Text>
+        {/* Exibe o nome, avaliações e localização dinamicamente */}
+        <Text style={styles.name}>{trainer ? trainer.username : 'Carregando nome...'}</Text>
         <Text style={styles.reviews}>2 avaliações</Text>
         <View style={styles.locationContainer}>
           <Ionicons name="location" size={16} color="gray" />
-          <Text style={styles.location}>São Paulo, SP • 10km</Text>
+          <Text style={styles.location}>
+            {trainer ? `${trainer.city}, ${trainer.CPF.slice(0, 3)}...` : 'Carregando localização...'}
+          </Text>
         </View>
-        <Text style={styles.price}>R$50/hora</Text>
+        <Text style={styles.price}>{trainer ? `R$${trainer.hourly_rate}/hora` : 'Carregando preço...'}</Text>
       </View>
 
       <Text style={styles.sectionTitle}>
         Sobre o <Text style={styles.highlight}>profissional:</Text>
       </Text>
+      {/* Exibe a descrição profissional */}
       <Text style={styles.description}>
-        Lorem ipsum dolor sit amet. Et magnam voluptatem et autem internos quo ipsum consequuntur vel corrupti excepturi.
+        {trainer ? trainer.professional_description : 'Carregando descrição...'}
       </Text>
 
       <Text style={styles.sectionTitle}>
@@ -98,10 +118,17 @@ const PerfilAdestrador = () => {
         ))}
       </View>
 
-      <TouchableOpacity style={styles.hireButton}>
-        <Link style={styles.hireButtonText} href="/page/AgendamentoAula1">
-          Quero contratar
-        </Link>
+      <TouchableOpacity
+        style={[styles.hireButton, { backgroundColor: selectedOption ? '#0d47a1' : '#d3d3d3' }]} // Alteração para mudar a cor
+        disabled={!selectedOption} // Desativa o clique no botão se nenhuma opção for selecionada
+      >
+        {selectedOption ? (
+          <Link style={styles.hireButtonText} href="/page/AgendamentoAula1">
+            Quero contratar
+          </Link>
+        ) : (
+          <Text style={styles.hireButtonText}>Quero contratar</Text> // Apenas mostra o texto sem link
+        )}
       </TouchableOpacity>
     </ScrollView>
   );
@@ -143,8 +170,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   image: {
-    width: 100, // Adjust the width as needed
-    height: 100, // Adjust the height as needed
+    width: 100,
+    height: 100,
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
@@ -156,12 +183,6 @@ const styles = StyleSheet.create({
   profileContainer: {
     alignItems: 'center',
     marginBottom: 20,
-  },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 10,
   },
   name: {
     fontSize: 20,

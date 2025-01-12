@@ -4,14 +4,19 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Link } from 'expo-router';
 
 const AgendamentoAula11 = () => {
-
     return (
         <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
-            <Text style={styles.header}>Cartão de Crédito</Text>
-            <TouchableOpacity style={styles.cartoes} >
-                <Image
-                    source={require('../../../assets/visa.png')}
-                />
+            {/* X no canto superior para voltar à página PerfilAdestrador */}
+            <View style={styles.header}>
+                <Link href="/page/PerfilAdestrador">
+                    <Text style={styles.closeButtonText}>X</Text>
+                </Link>
+            </View>
+
+            <Text style={styles.headerText}>Cartão de Crédito</Text>
+
+            <TouchableOpacity style={styles.cartoes}>
+                <Image source={require('../../../assets/visa.png')} />
                 <Link style={styles.cartao} href="/page/AgendamentoAula7">
                     <View>
                         <Text style={styles.cartaoTitle}>Visa - Crédito</Text>
@@ -29,11 +34,8 @@ const AgendamentoAula11 = () => {
                 </View>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.cartoes} >
-                <Image
-                    source={require('../../../assets/mastercard.png')}
-                />
-
+            <TouchableOpacity style={styles.cartoes}>
+                <Image source={require('../../../assets/mastercard.png')} />
                 <Link style={styles.cartao} href="/page/AgendamentoAula7">
                     <View>
                         <Text style={styles.cartaoTitle}>Mastercard - Crédito</Text>
@@ -43,7 +45,7 @@ const AgendamentoAula11 = () => {
 
                 <View style={styles.cardActions}>
                     <TouchableOpacity style={styles.iconButton}>
-                        <Image source={require('../../..//assets/editar.png')} style={styles.icon} />
+                        <Image source={require('../../../assets/editar.png')} style={styles.icon} />
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.iconButton}>
                         <Image source={require('../../../assets/lixeira.png')} style={styles.icon} />
@@ -51,14 +53,12 @@ const AgendamentoAula11 = () => {
                 </View>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.button} >
-
-                <Link style={styles.buttonText} 
-                href="/page/AgendamentoAula12"> 
-                Cadastrar novo cartão
+            <TouchableOpacity style={styles.button}>
+                <Link style={styles.buttonText} href="/page/AgendamentoAula12">
+                    Cadastrar novo cartão
                 </Link>
             </TouchableOpacity>
-        </LinearGradient >
+        </LinearGradient>
     );
 };
 
@@ -67,15 +67,23 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 20,
     },
-
     header: {
+        position: 'absolute',
+        top: 40,
+        right: 20,
+    },
+    closeButtonText: {
+        fontSize: 24,
+        color: '#fff',
+        fontWeight: 'bold',
+    },
+    headerText: {
         color: 'white',
         fontSize: 20,
         fontWeight: 'bold',
         marginBottom: 10,
-        alignItems: 'baseline'
+        alignItems: 'baseline',
     },
-
     cartoes: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -94,8 +102,7 @@ const styles = StyleSheet.create({
         marginLeft: 10,
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#888'
-
+        color: '#888',
     },
     button: {
         backgroundColor: '#191970',
@@ -123,7 +130,6 @@ const styles = StyleSheet.create({
         width: 20,
         height: 20,
     },
-
 });
 
 export default AgendamentoAula11;

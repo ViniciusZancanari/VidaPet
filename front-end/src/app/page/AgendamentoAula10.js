@@ -6,44 +6,48 @@ import { Link } from 'expo-router';
 const AgendamentoAula10 = () => {
   return (
     <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
+      {/* X no canto superior para voltar à página PerfilAdestrador */}
+      <View style={styles.header}>
+        <Link href="/page/PerfilAdestrador">
+          <Text style={styles.closeButtonText}>X</Text>
+        </Link>
+      </View>
+
       <View style={styles.grafismo}>
-        <Image
-          source={require('../../../assets/grafismo.png')}
-        />
+        <Image source={require('../../../assets/grafismo.png')} />
       </View>
+
       <View style={styles.checkIconContainer}>
-        <Image
-          source={require('../../../assets/check.png')}
-        />
+        <Image source={require('../../../assets/check.png')} />
       </View>
+
       <Text style={styles.title}>Solicitação enviada com sucesso!</Text>
+
       <Text style={styles.instructions}>
         Enviaremos um e-mail para você assim que o profissional escolhido confirmar o(s) agendamento(s). Obrigado!
       </Text>
+
       <TouchableOpacity style={styles.chatButton}>
-        <Link
-          style={styles.buttonText}
-          href="/page/Chat-Conversa">Chat - Tire dúvidas com o adestrador
+        <Link style={styles.buttonText} href="/page/Chat-Conversa">
+          Chat - Tire dúvidas com o adestrador
         </Link>
       </TouchableOpacity>
 
       <View style={styles.buttons}>
         <TouchableOpacity style={styles.voltarButton}>
-          <Link
-            style={styles.buttonText}
-            href="/page/AgendamentoAula9">Voltar
+          <Link style={styles.buttonText} href="/page/AgendamentoAula9">
+            Voltar
           </Link>
         </TouchableOpacity>
         <TouchableOpacity style={styles.pefilButton}>
-          <Link
-            href="/page/PerfilAdestrador">Perfil do adestrador
+          <Link href="/page/PerfilAdestrador">
+            Perfil do adestrador
           </Link>
         </TouchableOpacity>
       </View>
     </LinearGradient>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {
@@ -54,28 +58,34 @@ const styles = StyleSheet.create({
     padding: 20,
     width: '100%',
   },
-
+  header: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+  },
+  closeButtonText: {
+    fontSize: 24,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
   checkIconContainer: {
     marginTop: 150,
     marginBottom: 20,
     alignItems: 'center',
     justifyContent: 'center',
-
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
     color: '#FFF',
-    textAlign: 'center'
+    textAlign: 'center',
   },
   instructions: {
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 30,
     color: '#FFF',
-    textAlign: 'center'
-
   },
   chatButton: {
     backgroundColor: '#191970',
@@ -85,16 +95,14 @@ const styles = StyleSheet.create({
     marginBottom: 50,
     borderWidth: 3,
     borderStyle: 'solid',
-    borderColor: '#faac0f'
+    borderColor: '#faac0f',
   },
-
   buttons: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 50,
   },
-
   voltarButton: {
     marginRight: 40,
     paddingVertical: 8,
@@ -104,7 +112,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#fff',
     marginBottom: 50,
-
   },
   pefilButton: {
     backgroundColor: '#fff',
@@ -117,21 +124,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 10,
     color: '#000',
-    marginBottom: 50
+    marginBottom: 50,
   },
   buttonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
-
   },
   grafismo: {
     width: 100, // Adjust the width as needed
     height: 100, // Adjust the height as needed
     position: 'absolute',
     top: 70,
-    left: 0
-  }
+    left: 0,
+  },
 });
 
 export default AgendamentoAula10;

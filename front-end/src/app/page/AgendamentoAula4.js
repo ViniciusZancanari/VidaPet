@@ -1,11 +1,34 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link } from 'expo-router';
+import axios from 'axios';
+import Constants from 'expo-constants'; // Para capturar as informações do dispositivo
 
 const AgendamentoAula4 = () => {
+  const [trainer, setTrainer] = useState(null); // Estado para armazenar os dados do treinador
+  const [ip, setIp] = useState(Constants.manifest2?.extra?.localhost || '192.168.0.6'); // IP dinâmico ou padrão
+
+  // Faz a requisição para obter os dados do trainer
+  useEffect(() => {
+    axios.get(`http://${ip}:3000/trainer/6194a177-923d-4c03-8504-2ef51df5992e`) // Usa o IP dinâmico
+      .then(response => {
+        setTrainer(response.data); // Armazena os dados do trainer no estado
+      })
+      .catch(error => {
+        console.error('Erro ao buscar o treinador:', error);
+      });
+  }, [ip]); // O efeito depende do IP
+
   return (
     <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
+      {/* X no canto superior para voltar à página PerfilAdestrador */}
+      <View style={styles.header}>
+        <Link href="/page/PerfilAdestrador">
+          <Text style={styles.closeButtonText}>X</Text>
+        </Link>
+      </View>
+
       <Text style={styles.subtitle}>
         Você selecionou o dia <Text style={styles.subtitle2}>17/08/23 às 15h</Text>
       </Text>
@@ -14,7 +37,9 @@ const AgendamentoAula4 = () => {
         <Image source={require('../../../assets/grafismo.png')} />
       </View>
 
-      <Text style={styles.title}>Thiago Oliveira Freitas</Text>
+      {/* Exibe o nome do trainer dinamicamente */}
+      <Text style={styles.title}>{trainer ? trainer.username : 'Carregando nome...'}</Text>
+
       <Text style={styles.subtitle}>Local de encontro:</Text>
 
       <View>
@@ -53,6 +78,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
     width: '100%',
+  },
+  header: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+  },
+  closeButtonText: {
+    fontSize: 24,
+    color: '#fff',
+    fontWeight: 'bold',
   },
   title: {
     fontSize: 24,

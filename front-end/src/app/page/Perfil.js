@@ -1,18 +1,32 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
+import axios from 'axios';
+import Constants from 'expo-constants'; // Para acessar informações do dispositivo
 
 const Perfil = () => {
+  const [user, setUser] = useState(null); // Estado para armazenar os dados do usuário
+  const [ip, setIp] = useState(Constants.manifest2?.extra?.localhost || '192.168.0.6'); // Defina o IP dinamicamente ou utilize um padrão
+
+  // Faz a requisição para obter os dados do usuário
+  useEffect(() => {
+    axios.get(`http://${ip}:3000/client/0804fac1-880f-4394-b818-368580659f43`) // URL da API com IP dinâmico
+      .then(response => {
+        setUser(response.data); // Armazena os dados do usuário no estado
+      })
+      .catch(error => {
+        console.error('Erro ao buscar os dados do usuário:', error);
+      });
+  }, [ip]);
+
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton}>
-            <Link
-              href="/page/Home"
-              style={styles.navItem}>
+            <Link href="/page/Home" style={styles.navItem}>
               <Icon name="arrow-back" size={24} color="#ff1744" />
             </Link>
           </TouchableOpacity>
@@ -23,7 +37,11 @@ const Perfil = () => {
                 style={styles.profileImage}
               />
             </View>
-            <Text style={styles.headerText}>Nome do Usuário</Text>
+
+            {/* Exibe o nome do usuário dinamicamente */}
+            <Text style={styles.headerText}>
+              {user ? user.username : 'Carregando...'}
+            </Text>
           </View>
         </View>
 
@@ -31,9 +49,8 @@ const Perfil = () => {
           <TouchableOpacity style={styles.sectionItem}>
             <Icon name="person-outline" size={24} color="#ff1744" />
             <View style={styles.sectionText}>
-              <Link
-                style={styles.sectionTitle}
-                href="/page/DadosUsuario">Dados do Usuário
+              <Link style={styles.sectionTitle} href="/page/DadosUsuario">
+                Dados do Usuário
               </Link>
               <Text style={styles.sectionSubtitle}>Visualize e edite suas informações</Text>
             </View>
@@ -42,9 +59,8 @@ const Perfil = () => {
           <TouchableOpacity style={styles.sectionItem}>
             <Icon name="location-outline" size={24} color="#ff1744" />
             <View style={styles.sectionText}>
-              <Link
-                style={styles.sectionTitle}
-                href="/page/Endereco1">Endereços
+              <Link style={styles.sectionTitle} href="/page/Endereco1">
+                Endereços
               </Link>
               <Text style={styles.sectionSubtitle}>Meus locais de encontro</Text>
             </View>
@@ -53,9 +69,8 @@ const Perfil = () => {
           <TouchableOpacity style={styles.sectionItem}>
             <Icon name="card-outline" size={24} color="#ff1744" />
             <View style={styles.sectionText}>
-              <Link
-                style={styles.sectionTitle}
-                href="/page/FormasDePagamento">Pagamentos
+              <Link style={styles.sectionTitle} href="/page/FormasDePagamento">
+                Pagamentos
               </Link>
               <Text style={styles.sectionSubtitle}>Gerencie as suas formas de pagamento</Text>
             </View>
@@ -64,9 +79,8 @@ const Perfil = () => {
           <TouchableOpacity style={styles.sectionItem}>
             <Icon name="notifications-outline" size={24} color="#ff1744" />
             <View style={styles.sectionText}>
-              <Link
-                style={styles.sectionTitle}
-                href="/page/Notificacao">Notificações
+              <Link style={styles.sectionTitle} href="/page/Notificacao">
+                Notificações
               </Link>
               <Text style={styles.sectionSubtitle}>Confira todas as suas notificações</Text>
             </View>
@@ -78,9 +92,8 @@ const Perfil = () => {
           <TouchableOpacity style={styles.sectionItem}>
             <Icon name="chatbubble-outline" size={24} color="#ff1744" />
             <View style={styles.sectionText}>
-              <Link
-                style={styles.sectionTitle}
-                href="/page/Chat">Chat
+              <Link style={styles.sectionTitle} href="/page/Chat">
+                Chat
               </Link>
               <Text style={styles.sectionSubtitle}>Acesse as suas conversas aqui</Text>
             </View>
@@ -134,7 +147,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContainer: {
-    paddingBottom: 80, // Adjust to ensure content doesn't overlap with the navbar
+    paddingBottom: 80,
   },
   header: {
     flexDirection: 'row',
@@ -150,28 +163,11 @@ const styles = StyleSheet.create({
     left: 20,
     padding: 10,
   },
-  backButtonText: {
-    fontSize: 20,
-    color: '#EF5C43',
-  },
-  headerSpacer: {
-    flex: 1,
-  },
   headerText: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#315381',
     textAlign: 'center',
-  },
-  profilePic: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginBottom: 5,
-  },
-  userInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   profileImageContainer: {
     borderRadius: 25,
@@ -180,11 +176,6 @@ const styles = StyleSheet.create({
   profileImage: {
     width: 50,
     height: 50,
-  },
-  userName: {
-    marginLeft: 10,
-    fontSize: 18,
-    fontWeight: 'bold',
   },
   section: {
     padding: 10,
@@ -225,7 +216,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderTopWidth: 1,
     borderTopColor: '#ddd',
-    backgroundColor: 'white', // Ensure the navbar has a background color
+    backgroundColor: 'white',
     position: 'absolute',
     bottom: 0,
     width: '100%',

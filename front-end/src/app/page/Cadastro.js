@@ -23,7 +23,7 @@ const Cadastro = () => {
       return;
     }
 
-    axios.post('http://192.168.0.2:3000/client/', {
+    axios.post('http://192.168.0.3:3000/client/', {
       username,
       password,
       email,
@@ -35,6 +35,7 @@ const Cadastro = () => {
     })
       .then(response => {
         console.log(response.data);
+
         alert('Cadastro realizado com sucesso!');
       })
       .catch(error => {

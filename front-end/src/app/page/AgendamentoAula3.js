@@ -1,25 +1,59 @@
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
+import Constants from 'expo-constants';
+import axios from 'axios';
 
 const AgendamentoAula3 = () => {
-  const [selectedDate, setSelectedDate] = useState('17/08/2023');
-  const [selectedTime, setSelectedTime] = useState(null);
+  const [selectedTime, setSelectedTime] = useState('');
+  const [trainer, setTrainer] = useState(null);
+  const [trainingDate, setTrainingDate] = useState(null);
+  const ip = Constants.manifest2?.extra?.localhost || '192.168.0.6';
+  const router = useRouter();
 
-  const handleDateChange = (date) => {
-    setSelectedDate(date);
-  };
+  // Pega o agendamentoId e selectedDate dos parâmetros de navegação
+  const { params } = router;
+  const agendamentoId = params?.agendamentoId || "9e98e699-0fc3-4570-8a1a-027475d850b9"; // Exemplo de ID
 
-  const handleTimeChange = (time) => {
-    setSelectedTime(time);
-  };
-
+  // Função para continuar e enviar o horário para o backend
   const handleContinue = () => {
-    // Handle navigation or other actions
-    console.log('Selected Date:', selectedDate);
-    console.log('Selected Time:', selectedTime);
+    if (!selectedTime) {
+      Alert.alert('Erro', 'Por favor, selecione um horário antes de continuar.');
+      return;
+    }
+
+    const postData = {
+      client_id: "0804fac1-880f-4394-b818-368580659f43", // Exemplo de ID do cliente
+      trainer_id: "6194a177-923d-4c03-8504-2ef51df5992e", // ID do treinador
+      total_price: 50,
+      address: "Av Jose Cunha , 382",
+      availableDate:"2024-10-01T22:15:31.199Z", // Usando a data selecionada no campo `availableDate`
+      type_payment: "CARD",
+      availableDate: "T15:30:00.000Z",
+      hourClass: selectedTime,
+    };
+/*
+    axios.post(`http://${ip}:3000/trainingService`, postData)
+      .then(response => {
+        console.log('Horário atualizado com sucesso:', response.data);
+        Alert.alert('Sucesso', 'Horário atualizado com sucesso!');
+        router.push('/page/AgendamentoAula7');
+      })
+      .catch(error => {
+        console.error('Erro ao atualizar o horário:', error);
+        Alert.alert('Erro', 'Ocorreu um erro ao atualizar o horário.');
+      });
+      */
   };
+
+
+  // Carrega os dados do treinador
+  useEffect(() => {
+    axios.get(`http://${ip}:3000/trainer/9e98e699-0fc3-4570-8a1a-027475d850b9`)
+      .then(response => setTrainer(response.data))
+      .catch(error => console.error('Erro ao buscar o treinador:', error));
+  }, [ip]);
 
   const timeSlots = [
     '08:00', '09:00', '10:00', '11:00',
@@ -29,35 +63,31 @@ const AgendamentoAula3 = () => {
 
   return (
     <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
-      <Text style={styles.subtitle}>Você selecionnou o dia<Text style={styles.subtitle2}>17/08/23 às 15h</Text></Text>
+      <View style={styles.header}>
+        <Link href="/page/PerfilAdestrador">
+          <Text style={styles.closeButtonText}>X</Text>
+        </Link>
+      </View>
+
+      <Text style={styles.subtitle}>
+        Você selecionou  às {selectedTime || '---'}
+      </Text>
+
       <View style={styles.image}>
         <Image source={require('../../../assets/perfil.png')} />
         <Image source={require('../../../assets/grafismo.png')} />
       </View>
 
-      <Text style={styles.title}>Thiago Oliveira Freitas</Text>
-      <Text style={styles.subtitle}>Você escolheu o plano <Text style={styles.subtitle2}>avulso</Text></Text>
-
-      <TouchableOpacity style={styles.button} onPress={() => handleDateChange('17/08/2023')}>
-        <Text style={styles.buttonText}>{selectedDate}</Text>
-      </TouchableOpacity>
+      <Text style={styles.title}>{trainer ? trainer.username : 'Carregando nome...'}</Text>
 
       <View style={styles.timeGrid}>
         {timeSlots.map((time) => (
           <TouchableOpacity
             key={time}
-            style={[
-              styles.timeButton,
-              selectedTime === time && styles.timeButtonSelected
-            ]}
-            onPress={() => handleTimeChange(time)}
+            style={[styles.timeButton, selectedTime === time && styles.timeButtonSelected]}
+            onPress={() => setSelectedTime(time)}
           >
-            <Text
-              style={[
-                styles.timeButtonText,
-                selectedTime === time && styles.timeButtonTextSelected
-              ]}
-            >
+            <Text style={[styles.timeButtonText, selectedTime === time && styles.timeButtonTextSelected]}>
               {time}
             </Text>
           </TouchableOpacity>
@@ -68,10 +98,11 @@ const AgendamentoAula3 = () => {
         <TouchableOpacity style={styles.voltarButton}>
           <Link style={styles.buttonText} href="/page/AgendamentoAula1">Voltar</Link>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.avancarButton} onPress={handleContinue}>
-          <Link style={styles.buttonText} href="/page/AgendamentoAula4">Avançar</Link>
+
+        <TouchableOpacity style={styles.avancarButton}>
+          <Link style={styles.buttonText} href=" /page/AgendamentoAula7">Avançar</Link>
         </TouchableOpacity>
-      </View>
+              </View>
     </LinearGradient>
   );
 };
@@ -85,14 +116,21 @@ const styles = StyleSheet.create({
     padding: 20,
     width: '100%',
   },
-  image: {
-    width: 100, // Adjust the width as needed
-    height: 100, // Adjust the height as needed
-    flex: 1,
-    flexDirection: 'row',
+  header: {
+    position: 'absolute',
     top: 40,
-    left: 0,
-    marginBottom: 150,
+    right: 20,
+  },
+  closeButtonText: {
+    fontSize: 24,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  image: {
+    width: 100,
+    height: 100,
+    flexDirection: 'row',
+    marginTop: 40,
   },
   title: {
     fontSize: 24,
@@ -111,22 +149,9 @@ const styles = StyleSheet.create({
   subtitle2: {
     fontSize: 15,
     fontWeight: 'bold',
-    marginBottom: 20,
     color: 'yellow',
     textAlign: 'center',
     marginBottom: 20,
-  },
-  dateButton: {
-    backgroundColor: '#007bff',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 20,
-  },
-  dateButtonText: {
-    backgroundColor: '#191970',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 30,
   },
   timeGrid: {
     flexDirection: 'row',
@@ -156,69 +181,34 @@ const styles = StyleSheet.create({
   timeButtonTextSelected: {
     color: '#FFF',
   },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '80%',
-  },
-  backButton: {
-    backgroundColor: '#007bff',
-    padding: 15,
-    borderRadius: 10,
-    width: '48%',
-  },
-  continueButton: {
-    backgroundColor: '#FFC107', // Gold color
-    padding: 15,
-    borderRadius: 10,
-    width: '48%',
-  },
-  button: {
-    width: 300,
-    backgroundColor: '#191970',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 30,
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FFF',
-    textAlign: 'center',
-  },
   rowButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    width: '80%',
     marginTop: 20,
     marginBottom: 50,
   },
   voltarButton: {
-    marginRight: 20,
     paddingVertical: 8,
     paddingHorizontal: 30,
     borderRadius: 30,
     backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: '#fff',
-    marginBottom: 50,
     color: '#FFF',
   },
   avancarButton: {
     backgroundColor: '#191970',
     paddingVertical: 10,
-    paddingHorizontal: 50,
+    paddingHorizontal: 30,
     borderRadius: 30,
-    marginBottom: 50,
     borderWidth: 3,
     borderStyle: 'solid',
     borderColor: '#faac0f',
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 16,
+    color: '#FFF',
   },
 });
 

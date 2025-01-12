@@ -1,17 +1,52 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
+import axios from 'axios';
+import Constants from 'expo-constants'; // Para capturar as informações do dispositivo
 
 const Home = () => {
+  const [trainer, setTrainer] = useState(null);
+  const [ip, setIp] = useState('192.168.0.6'); // Defina seu IP fixo manualmente ou como variável de ambiente
+
+  useEffect(() => {
+    const fetchTrainer = async () => {
+      try {
+        const response = await axios.get(`http://${ip}:3000/trainer/9e98e699-0fc3-4570-8a1a-027475d850b9`);
+        setTrainer(response.data);
+      } catch (error) {
+        console.error("Erro ao buscar o treinador:", error);
+      }
+    };
+
+    fetchTrainer();
+  }, [ip]); // O efeito depende do IP
+
+  const renderHearts = (rating) => {
+    const maxRating = 5; // Número máximo de corações
+    let hearts = [];
+
+    for (let i = 1; i <= maxRating; i++) {
+      hearts.push(
+        <Ionicons
+          key={i}
+          name="heart"
+          size={16}
+          color={i <= rating ? '#00BFFF' : '#ccc'} // Cor azul se for preenchido, cinza se não
+        />
+      );
+    }
+    return hearts;
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView>
         <View style={styles.header}>
-          <Text style={styles.address}>R. Lorem Ipsum, 100</Text>
+          <Text style={styles.address}>{trainer ? trainer.address : 'R. Lorem Ipsum, 100'}</Text>
           <View style={styles.icons}>
             <Ionicons name="filter" size={24} color="black" style={styles.icon} />
-            <Link href="/page/Notificacao" style={styles.navItem}>
+            <Link href="/page/Notificacao2" style={styles.navItem}>
               <Ionicons name="notifications" size={24} color="black" style={styles.icon} />
             </Link>
           </View>
@@ -23,22 +58,38 @@ const Home = () => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Alguns profissionais perto de você:</Text>
-          {Array.from({ length: 3 }).map((_, index) => (
-            <TouchableOpacity key={index} style={styles.card} onPress={() => {/* handle card press */}}>
+          <Text style={styles.sectionTitle}>Alguns <Text style={styles.highlightText}>profissionais</Text> perto de você:</Text>
+
+          {trainer ? (
+            <TouchableOpacity style={styles.card} onPress={() => { }}>
               <Image source={require('../../../assets/perfil.png')} style={styles.cardImage} />
-              <View style={styles.cardContent}>
-                <Link href="/page/PerfilAdestrador" style={styles.cardLink}>
-                  <Text style={styles.cardName}>Thiago Oliveira Freitas</Text>
-                  <Text style={styles.cardDetails}>São Paulo, SP • 10km</Text>
-                  <Text style={styles.cardPrice}>R$50/hora</Text>
+              <Link href="/page/PerfilAdestrador" style={styles.cardLink}>
+                <View style={styles.cardContent}>
+                  <View style={styles.cardHeader}>
+                    <Text style={styles.cardName}>{trainer.username || 'Nome não disponível'}</Text>
+                    <View style={styles.premiumTag}>
+                      <Text style={styles.premiumText}>Premium</Text>
+                    </View>
+                  </View>
+                  <View style={styles.ratingRow}>
+                    {/* Renderizando os corações com base no rating do backend */}
+                    {renderHearts(trainer.rating)}
+                  </View>
+                  <Text style={styles.cardDetails}>
+                    <Ionicons name="location" size={14} color="gray" /> {`${trainer.city}, SP • 10km`}
+                  </Text>
+                  <Text style={styles.cardPrice}>
+                    <Ionicons name="cash-outline" size={14} color="green" /> R${trainer.hourly_rate}/hora
+                  </Text>
                   <Text style={styles.cardMember}>Membro do app desde Fev/23</Text>
-                </Link>
-              </View>
+                </View>
+              </Link>
             </TouchableOpacity>
-          ))}
+          ) : (
+            <Text>Carregando profissionais...</Text>
+          )}
         </View>
-      </ScrollView>
+      </ScrollView >
 
       <View style={styles.navigation}>
         <TouchableOpacity style={styles.navItem}>
@@ -74,7 +125,7 @@ const Home = () => {
           </Link>
         </TouchableOpacity>
       </View>
-    </View>
+    </View >
   );
 };
 
@@ -92,6 +143,7 @@ const styles = StyleSheet.create({
   address: {
     fontSize: 16,
     fontWeight: 'bold',
+    color: '#333',
   },
   icons: {
     flexDirection: 'row',
@@ -109,51 +161,69 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 10,
   },
+  highlightText: {
+    color: '#00BFFF',
+  },
   promotionImage: {
     width: '100%',
     height: 200,
     borderRadius: 10,
   },
-  card: {
+   card: {
     flexDirection: 'row',
     backgroundColor: 'white',
     padding: 15,
     marginBottom: 10,
-    borderRadius: 10,
+    borderRadius: 20,
     elevation: 2,
     shadowColor: 'black',
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 5,
+    position: 'relative',
   },
   cardImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderColor: '#FFA500',
+    borderWidth: 2,
   },
-  cardContent: {
-    marginLeft: 10,
-    flex: 1,
+  premiumTag: {
+    backgroundColor: '#00BFFF',
+    borderRadius: 15, // Arredondando mais as bordas
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    position: 'absolute',
+    right: -100,  // Ajuste para garantir que fique fora do card
+    top: -10,    // Ajuste para ficar no topo da imagem
+    elevation: 3, // Sombra para destacar a tag
+
   },
-  cardLink: {
-    flex: 1,
+  premiumText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold', // Texto mais destacado
   },
-  cardName: {
-    fontSize: 16,
-    fontWeight: 'bold',
+  ratingRow: {
+    flexDirection: 'row',
+    marginVertical: 5,
   },
   cardDetails: {
     fontSize: 14,
     color: 'gray',
+    marginTop: 5,
   },
   cardPrice: {
     fontSize: 14,
     color: '#0d47a1',
     fontWeight: 'bold',
+    marginTop: 5,
   },
   cardMember: {
     fontSize: 12,
     color: 'gray',
+    marginTop: 5,
   },
   navigation: {
     flexDirection: 'row',

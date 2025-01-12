@@ -3,10 +3,16 @@ import { View, Text, TouchableOpacity, StyleSheet, Image, TextInput } from 'reac
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link } from 'expo-router';
 
-
 const AgendamentoAula5 = () => {
   return (
     <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
+      {/* X no canto superior para voltar à página PerfilAdestrador */}
+      <View style={styles.header}>
+        <Link href="/page/PerfilAdestrador">
+          <Text style={styles.closeButtonText}>X</Text>
+        </Link>
+      </View>
+
       <Text style={styles.subtitle}>Você selecionnou o dia<Text style={styles.subtitle2}>17/08/23 às 15h</Text></Text>
       <View style={styles.image}>
         <Image
@@ -20,11 +26,9 @@ const AgendamentoAula5 = () => {
       <Text style={styles.title}>Thiago Oliveira Freitas</Text>
       <Text style={styles.subtitle}>Local de encontro:</Text>
 
-
       <View style={styles.line}>
-        <TextInput placeholder='Digete um endereço:'></TextInput>
+        <TextInput placeholder='Digite um endereço:' />
       </View>
-
 
       <View style={styles.rowButton}>
         <TouchableOpacity style={styles.voltarButton}>
@@ -39,12 +43,10 @@ const AgendamentoAula5 = () => {
             href="/page/AgendamentoAula6">Avançar
           </Link>
         </TouchableOpacity>
-
       </View>
     </LinearGradient>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {
@@ -55,13 +57,21 @@ const styles = StyleSheet.create({
     padding: 20,
     width: '100%',
   },
-
+  header: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+  },
+  closeButtonText: {
+    fontSize: 24,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
   title: {
     fontSize: 24,
     color: '#FFF',
     textAlign: 'center',
-    marginBottom: 20
-
+    marginBottom: 20,
   },
   subtitle: {
     fontSize: 15,
@@ -69,7 +79,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     color: '#FFF',
     textAlign: 'center',
-    marginBottom: 50
+    marginBottom: 50,
   },
   subtitle2: {
     fontSize: 15,
@@ -77,9 +87,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     color: 'yellow',
     textAlign: 'center',
-    marginBottom: 20
+    marginBottom: 20,
   },
-
   button: {
     backgroundColor: '#191970',
     paddingVertical: 10,
@@ -95,15 +104,13 @@ const styles = StyleSheet.create({
     borderColor: '#000',
     marginRight: 10,
     color: '#fff',
-    marginBottom: 50
+    marginBottom: 50,
   },
-
   line: {
     borderBottomWidth: 2,
     borderBottomColor: '#F27B61',
-    marginBottom: 20
+    marginBottom: 20,
   },
-
   rowButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -111,7 +118,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 50,
   },
-
   voltarButton: {
     marginRight: 20,
     paddingVertical: 8,
@@ -121,9 +127,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#fff',
     marginBottom: 50,
-    color: '#FFF'
+    color: '#FFF',
   },
-
   avancarButton: {
     backgroundColor: '#191970',
     paddingVertical: 10,
@@ -132,14 +137,11 @@ const styles = StyleSheet.create({
     marginBottom: 50,
     borderWidth: 3,
     borderStyle: 'solid',
-    borderColor: '#faac0f'
-
+    borderColor: '#faac0f',
   },
-
   buttonText: {
     color: '#fff',
     fontSize: 16,
-
   },
   image: {
     width: 100, // Adjust the width as needed
@@ -147,8 +149,8 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     top: 40,
-    left: 0
-  }
+    left: 0,
+  },
 });
 
 export default AgendamentoAula5;

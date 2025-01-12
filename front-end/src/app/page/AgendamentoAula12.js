@@ -5,34 +5,38 @@ import { Link } from 'expo-router';
 const AgendamentoAula12 = () => {
     return (
         <View style={styles.container}>
+            {/* X no canto superior para voltar à página PerfilAdestrador */}
+            <View style={styles.header}>
+                <Link href="/page/PerfilAdestrador">
+                    <Text style={styles.closeButtonText}>X</Text>
+                </Link>
+            </View>
+
             <Text style={styles.title}>Cartão de crédito</Text>
+            
             <View style={styles.iconsContainer}>
                 <Image source={require('../../../assets/visa.png')} style={styles.icon} />
                 <Image source={require('../../../assets/mastercard.png')} style={styles.icon} />
             </View>
+
             <TextInput style={styles.input} placeholder="Número de cartão" placeholderTextColor="#FFF" />
+            
             <View style={styles.row}>
                 <TextInput style={[styles.input, styles.halfInput]} placeholder="Validade" placeholderTextColor="#FFF" />
                 <TextInput style={[styles.input, styles.halfInput]} placeholder="CVV" placeholderTextColor="#FFF" />
             </View>
+
             <TextInput style={styles.input} placeholder="Nome do titular" placeholderTextColor="#FFF" />
             <TextInput style={styles.input} placeholder="Número de cartão" placeholderTextColor="#FFF" />
             <TextInput style={styles.input} placeholder="Apelido do cartão (opcional)" placeholderTextColor="#FFF" />
 
             <View style={styles.buttons}>
                 <TouchableOpacity style={styles.voltarButton}>
-                    <Link 
-                        style={styles.buttonText}
-                        href="/page/AgendamentoAula11">Voltar
-                    </Link>
-
+                    <Link style={styles.buttonText} href="/page/AgendamentoAula11">Voltar</Link>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.salvarButton}>
-                    <Link
-                        style={styles.buttonText}
-                        href="/page/AgendamentoAula11">Salvar
-                    </Link>
+                    <Link style={styles.buttonText} href="/page/AgendamentoAula11">Salvar</Link>
                 </TouchableOpacity>
             </View>
         </View>
@@ -47,6 +51,16 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    header: {
+        position: 'absolute',
+        top: 40,
+        right: 20,
+    },
+    closeButtonText: {
+        fontSize: 24,
+        color: '#fff',
+        fontWeight: 'bold',
     },
     title: {
         color: 'white',
@@ -99,9 +113,7 @@ const styles = StyleSheet.create({
         borderColor: '#fff',
         marginBottom: 50,
         color: '#FFF',
-
     },
-
     salvarButton: {
         backgroundColor: '#191970',
         paddingVertical: 10,
@@ -110,14 +122,11 @@ const styles = StyleSheet.create({
         marginBottom: 50,
         borderWidth: 3,
         borderStyle: 'solid',
-        borderColor: '#faac0f'
-
+        borderColor: '#faac0f',
     },
-
     buttonText: {
         color: '#fff',
         fontSize: 16,
-
     },
 });
 

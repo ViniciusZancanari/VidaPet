@@ -20,7 +20,7 @@ const Agenda = () => {
         const fetchClasses = async () => {
             try {
                 console.log('Fetching data from backend...');
-                const response = await fetch('http://192.168.0.2:3000/trainingService/');
+                const response = await fetch('http://172.29.0.1:3000/trainingService/');
                 if (!response.ok) {
                     throw new Error(`HTTP Error! Status: ${response.status}`);
                 }

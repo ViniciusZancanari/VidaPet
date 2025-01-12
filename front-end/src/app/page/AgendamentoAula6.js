@@ -3,11 +3,18 @@ import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link } from 'expo-router';
 
-
 const AgendamentoAula6 = () => {
   return (
     <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
+      {/* X no canto superior para voltar à página PerfilAdestrador */}
+      <View style={styles.header}>
+        <Link href="/page/PerfilAdestrador">
+          <Text style={styles.closeButtonText}>X</Text>
+        </Link>
+      </View>
+
       <Text style={styles.title}>Pagamento pelo aplicativo:</Text>
+      
       <TouchableOpacity style={styles.cartaoButton}>
         <View style={styles.iconButton1}>
           <Image source={require('../../../assets/cartaoCredito.png')} />
@@ -17,6 +24,7 @@ const AgendamentoAula6 = () => {
           </Link>
         </View>
       </TouchableOpacity>
+      
       <TouchableOpacity style={styles.pixButton}>
         <View style={styles.iconButton2}>
           <Image source={require('../../../assets/pix2.png')} />
@@ -26,25 +34,25 @@ const AgendamentoAula6 = () => {
           </Link>
         </View>
       </TouchableOpacity>
+      
       <View style={styles.buttons}>
-      <TouchableOpacity style={styles.voltarButton}>
+        <TouchableOpacity style={styles.voltarButton}>
           <Link
             style={styles.buttonText}
             href="/page/AgendamentoAula5">Voltar
           </Link>
         </TouchableOpacity>
+        
         <TouchableOpacity style={styles.avancarButton}>
           <Link
             style={styles.buttonText}
             href="/page/AgendamentoAula7">Avançar
           </Link>
         </TouchableOpacity>
-
       </View>
     </LinearGradient>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {
@@ -55,15 +63,24 @@ const styles = StyleSheet.create({
     padding: 20,
     width: '100%',
   },
-
+  header: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+  },
+  closeButtonText: {
+    fontSize: 24,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
   title: {
     fontSize: 24,
     marginBottom: 20,
     color: '#FFF',
     textAlign: 'center',
-    marginBottom: 50
+    marginBottom: 50,
   },
-  iconButton1:{
+  iconButton1: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -77,7 +94,7 @@ const styles = StyleSheet.create({
     marginBottom: 50,
     color: '#FFF',
   },
-  iconButton2:{
+  iconButton2: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -89,15 +106,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#FFCB05',
     marginBottom: 50,
-    color:'#FFCB05',
+    color: '#FFCB05',
   },
-  cartaoButtonText:{
+  cartaoButtonText: {
     color: '#fff',
     fontSize: 16,
-    marginLeft:14,
-
+    marginLeft: 14,
   },
-
   buttons: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -114,9 +129,7 @@ const styles = StyleSheet.create({
     borderColor: '#fff',
     marginBottom: 50,
     color: '#FFF',
-
   },
-
   avancarButton: {
     backgroundColor: '#191970',
     paddingVertical: 10,
@@ -125,22 +138,19 @@ const styles = StyleSheet.create({
     marginBottom: 50,
     borderWidth: 3,
     borderStyle: 'solid',
-    borderColor: '#faac0f'
-
+    borderColor: '#faac0f',
   },
-
   buttonText: {
     color: '#fff',
     fontSize: 16,
-
   },
   grafismo: {
     width: 100, // Adjust the width as needed
     height: 100, // Adjust the height as needed
     position: 'absolute',
     top: 70,
-    left: 0
-  }
+    left: 0,
+  },
 });
 
 export default AgendamentoAula6;

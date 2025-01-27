@@ -1,20 +1,73 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList, Linking } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link } from 'expo-router';
 
 const FormasDePagamento2 = () => {
+    const [transacoes, setTransacoes] = useState([]);
+
     const cartoes = [
         { id: '1', bandeira: 'Visa', tipo: 'Crédito', numero: '0000', imagem: require('../../../assets/visa.png') },
         { id: '2', bandeira: 'Mastercard', tipo: 'Crédito', numero: '0000', imagem: require('../../../assets/mastercard.png') },
     ];
 
-    const transacoes = [
-        { id: '1', nome: 'Thiago Oliveira Freitas', tipo: 'Crédito - Visa', data: '26/03/2024 16:20', valor: 'R$50,00' },
-        { id: '2', nome: 'Fernanda Oliveira Freitas', tipo: 'Crédito - Visa', data: '24/03/2024 12:20', valor: 'R$50,00' },
-        { id: '3', nome: 'Osmar Oliveira Freitas', tipo: 'Crédito - Mastercard', data: '21/03/2024 10:00', valor: 'R$50,00' },
-        { id: '4', nome: 'Felipe Oliveira Freitas', tipo: 'Pix', data: '26/03/2024 16:20', valor: 'R$50,00' },
-    ];
+    // Função para criar um link de pagamento
+    const handleCreatePayment = async () => {
+        try {
+            const preference = {
+                items: [
+                    {
+                        title: 'Serviço Exemplo',
+                        quantity: 1,
+                        currency_id: 'BRL',
+                        unit_price: 50.0, // Valor do pagamento
+                    },
+                ],
+            };
+
+            const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer 8500af03efcfdedaf4aedaafc9b3a1ea`,
+                },
+                body: JSON.stringify(preference),
+            });
+
+            const data = await response.json();
+            const paymentLink = data.init_point;
+
+            // Abre o link de pagamento no navegador ou dentro do app
+            Linking.openURL(paymentLink);
+        } catch (error) {
+            console.error('Erro ao criar o pagamento:', error);
+        }
+    };
+
+    // Função para buscar transações recentes
+    const fetchTransactions = async () => {
+        try {
+            const response = await fetch(
+                'https://api.mercadopago.com/v1/payments/search',
+                {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer TEST-7566924207219047-120113-4f46992f03f3b269603e01940e60ef75-152140602`,
+                    },
+                }
+            );
+
+            const data = await response.json();
+            setTransacoes(data.results);
+        } catch (error) {
+            console.error('Erro ao buscar transações:', error);
+        }
+    };
+
+    // Chama a função para buscar transações ao carregar o componente
+    useEffect(() => {
+        fetchTransactions();
+    }, []);
 
     return (
         <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
@@ -47,7 +100,7 @@ const FormasDePagamento2 = () => {
                 </View>
             ))}
 
-            <TouchableOpacity style={styles.addButton}>
+            <TouchableOpacity style={styles.addButton} onPress={handleCreatePayment}>
                 <Text style={styles.addButtonText}>Adicionar cartão</Text>
             </TouchableOpacity>
 
@@ -57,10 +110,10 @@ const FormasDePagamento2 = () => {
                 keyExtractor={item => item.id}
                 renderItem={({ item }) => (
                     <View style={styles.transacao}>
-                        <Text style={styles.transacaoNome}>{item.nome}</Text>
-                        <Text style={styles.transacaoDetalhes}>{item.tipo}</Text>
-                        <Text style={styles.transacaoDetalhes}>{item.data}</Text>
-                        <Text style={styles.transacaoValor}>{item.valor}</Text>
+                        <Text style={styles.transacaoNome}>{item.description}</Text>
+                        <Text style={styles.transacaoDetalhes}>{item.payment_method_id}</Text>
+                        <Text style={styles.transacaoDetalhes}>{new Date(item.date_created).toLocaleString()}</Text>
+                        <Text style={styles.transacaoValor}>R${item.transaction_amount.toFixed(2)}</Text>
                     </View>
                 )}
             />

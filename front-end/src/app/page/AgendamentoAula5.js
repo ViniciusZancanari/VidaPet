@@ -1,48 +1,112 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, TextInput } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Link } from 'expo-router';
+import { Link, useLocalSearchParams } from 'expo-router';
+import axios from 'axios';
 
 const AgendamentoAula5 = () => {
+  const [trainer, setTrainer] = useState(null);
+  const [address, setAddress] = useState('');
+  const { trainer_id, selectedDate, selectedTime } = useLocalSearchParams();
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '---';
+    const [year, month, day] = dateString.split('-');
+    return `${day}/${month}/${year.slice(2)}`;
+  };
+
+  const formatTime = (timeString) => {
+    if (!timeString) return '---';
+    return `${timeString.split(':')[0]}h`;
+  };
+
+  useEffect(() => {
+    if (trainer_id) {
+      axios.get(`https://164.152.36.73:3000/trainer/${trainer_id}`)
+        .then(response => {
+          setTrainer(response.data);
+        })
+        .catch(error => {
+          console.error('Erro ao buscar o treinador:', error);
+        });
+    }
+  }, [trainer_id]);
+
   return (
     <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
-      {/* X no canto superior para voltar à página PerfilAdestrador */}
       <View style={styles.header}>
         <Link href="/page/PerfilAdestrador">
           <Text style={styles.closeButtonText}>X</Text>
         </Link>
       </View>
 
-      <Text style={styles.subtitle}>Você selecionnou o dia<Text style={styles.subtitle2}>17/08/23 às 15h</Text></Text>
-      <View style={styles.image}>
-        <Image
-          source={require('../../../assets/perfil.png')}
-        />
-        <Image
-          source={require('../../../assets/grafismo.png')}
-        />
-      </View>
+      <View style={styles.centeredContent}>
+        <Text style={styles.dateText}>
+          Você selecionou o dia <Text style={styles.highlightText}>
+            {formatDate(selectedDate)} às {formatTime(selectedTime)}
+          </Text>
+        </Text>
 
-      <Text style={styles.title}>Thiago Oliveira Freitas</Text>
-      <Text style={styles.subtitle}>Local de encontro:</Text>
+        <View style={styles.trainerContainer}>
+          <View style={styles.imageContainer}>
+            <Image source={require('../../../assets/perfil.png')} style={styles.profileImage} />
+            <Image source={require('../../../assets/grafismo.png')} style={styles.decorImage} />
+          </View>
+          <Text style={styles.trainerName}>{trainer ? trainer.username : 'Carregando...'}</Text>
+        </View>
 
-      <View style={styles.line}>
-        <TextInput placeholder='Digite um endereço:' />
-      </View>
+        <View style={styles.meetingSection}>
+          <Text style={styles.sectionTitle}>Local de encontro:</Text>
 
-      <View style={styles.rowButton}>
-        <TouchableOpacity style={styles.voltarButton}>
-          <Link
-            style={styles.buttonText}
-            href="/page/AgendamentoAula4">Voltar
-          </Link>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.avancarButton}>
-          <Link
-            style={styles.buttonText}
-            href="/page/AgendamentoAula6">Avançar
-          </Link>
-        </TouchableOpacity>
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.addressInput}
+              placeholder="Digite um endereço:"
+              placeholderTextColor="#999"
+              value={address}
+              onChangeText={setAddress}
+            />
+            <View style={styles.inputUnderline} />
+          </View>
+        </View>
+
+        <View style={styles.buttonRow}>
+          <TouchableOpacity style={styles.backButton}>
+            <Link
+              href={{
+                pathname: '/page/AgendamentoAula4',
+                params: { 
+                  trainer_id: trainer_id.toString(),
+                  selectedDate,
+                  selectedTime 
+                }
+              }}
+              style={styles.buttonText}
+            >
+              Voltar
+            </Link>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.nextButton, !address && styles.nextButtonDisabled]}
+            disabled={!address}
+          >
+            <Link
+              href={{
+                pathname: '/page/AgendamentoAula7',
+                params: {
+                  trainer_id: trainer_id.toString(),
+                  selectedDate,
+                  selectedTime,
+                  meetingAddress: address
+                }
+              }}
+              style={styles.buttonText}
+            >
+              Avançar
+            </Link>
+          </TouchableOpacity>
+        </View>
       </View>
     </LinearGradient>
   );
@@ -52,104 +116,121 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
     width: '100%',
   },
   header: {
     position: 'absolute',
     top: 40,
     right: 20,
+    zIndex: 1,
   },
   closeButtonText: {
     fontSize: 24,
     color: '#fff',
     fontWeight: 'bold',
   },
-  title: {
-    fontSize: 24,
-    color: '#FFF',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  subtitle: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    marginTop: 20,
-    color: '#FFF',
-    textAlign: 'center',
-    marginBottom: 50,
-  },
-  subtitle2: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: 'yellow',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  button: {
-    backgroundColor: '#191970',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 30,
-  },
-  marcarButton: {
-    backgroundColor: '#191970',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 30,
-    borderWidth: 1,
-    borderColor: '#000',
-    marginRight: 10,
-    color: '#fff',
-    marginBottom: 50,
-  },
-  line: {
-    borderBottomWidth: 2,
-    borderBottomColor: '#F27B61',
-    marginBottom: 20,
-  },
-  rowButton: {
-    flexDirection: 'row',
+  centeredContent: {
+    flex: 1,
+    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 30,
     marginTop: 20,
-    marginBottom: 50,
   },
-  voltarButton: {
-    marginRight: 20,
-    paddingVertical: 8,
+  dateText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFF',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  highlightText: {
+    color: '#FFD700',
+    fontWeight: 'bold',
+  },
+  trainerContainer: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  imageContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  profileImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+  },
+  decorImage: {
+    width: 30,
+    height: 80,
+    marginLeft: -10,
+  },
+  trainerName: {
+    fontSize: 24,
+    color: '#FFF',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 30,
+  },
+  meetingSection: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFF',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  inputContainer: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  addressInput: {
+    color: '#FFF',
+    fontSize: 16,
+    paddingVertical: 10,
+    width: '100%',
+    textAlign: 'center',
+  },
+  inputUnderline: {
+    borderBottomWidth: 2,
+    borderBottomColor: '#F27B61',
+    width: '80%',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 20,
+  },
+  backButton: {
+    paddingVertical: 12,
     paddingHorizontal: 30,
     borderRadius: 30,
     backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: '#fff',
-    marginBottom: 50,
-    color: '#FFF',
   },
-  avancarButton: {
+  nextButton: {
     backgroundColor: '#191970',
-    paddingVertical: 10,
-    paddingHorizontal: 50,
+    paddingVertical: 12,
+    paddingHorizontal: 30,
     borderRadius: 30,
-    marginBottom: 50,
     borderWidth: 3,
-    borderStyle: 'solid',
     borderColor: '#faac0f',
+  },
+  nextButtonDisabled: {
+    opacity: 0.6,
   },
   buttonText: {
     color: '#fff',
     fontSize: 16,
-  },
-  image: {
-    width: 100, // Adjust the width as needed
-    height: 100, // Adjust the height as needed
-    flex: 1,
-    flexDirection: 'row',
-    top: 40,
-    left: 0,
+    fontWeight: 'bold',
   },
 });
 

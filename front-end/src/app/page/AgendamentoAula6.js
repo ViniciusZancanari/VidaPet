@@ -30,7 +30,7 @@ const AgendamentoAula6 = () => {
           <Image source={require('../../../assets/pix2.png')} />
           <Link
             style={styles.cartaoButtonText}
-            href="/page/AgendamentoAula9">Pix
+            href="/page/AgendamentoAula7">Pix
           </Link>
         </View>
       </TouchableOpacity>

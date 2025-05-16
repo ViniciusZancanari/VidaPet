@@ -1,65 +1,87 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, Alert, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Link, useRouter } from 'expo-router';
-import Constants from 'expo-constants';
+import { Link, useRouter, useLocalSearchParams } from 'expo-router';
 import axios from 'axios';
 
 const AgendamentoAula3 = () => {
-  const [selectedTime, setSelectedTime] = useState('');
   const [trainer, setTrainer] = useState(null);
-  const [trainingDate, setTrainingDate] = useState(null);
-  const ip = Constants.manifest2?.extra?.localhost || '192.168.0.6';
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { trainer_id, selectedDate: routeSelectedDate } = useLocalSearchParams();
+  const [selectedTime, setSelectedTime] = useState(null);
+  const [localSelectedDate, setLocalSelectedDate] = useState(routeSelectedDate);
 
-  // Pega o agendamentoId e selectedDate dos parâmetros de navegação
-  const { params } = router;
-  const agendamentoId = params?.agendamentoId || "9e98e699-0fc3-4570-8a1a-027475d850b9"; // Exemplo de ID
+  // Função para formatar a data no padrão dd/mm/aaaa
+  const formatDate = (dateString) => {
+    if (!dateString) return '---';
+    const [year, month, day] = dateString.split('-');
+    return `${day}/${month}/${year}`;
+  };
 
-  // Função para continuar e enviar o horário para o backend
+  useEffect(() => {
+    if (routeSelectedDate) {
+      setLocalSelectedDate(routeSelectedDate);
+      setLoading(false);
+    } else {
+      setLoading(false);
+    }
+  }, [routeSelectedDate]);
+
+  useEffect(() => {
+    if (trainer_id) {
+      axios
+        .get(`https://164.152.36.73:3000/trainer/${trainer_id}`)
+        .then((response) => setTrainer(response.data))
+        .catch((error) => console.error('Erro ao buscar o treinador:', error));
+    }
+  }, [trainer_id]);
+
+  const timeSlots = [
+    '08:00', '09:00', '10:00', '11:00',
+    '12:00', '13:00', '14:00', '15:00',
+    '16:00', '17:00', '18:00', '19:00',
+  ];
+
   const handleContinue = () => {
     if (!selectedTime) {
       Alert.alert('Erro', 'Por favor, selecione um horário antes de continuar.');
       return;
     }
 
-    const postData = {
-      client_id: "0804fac1-880f-4394-b818-368580659f43", // Exemplo de ID do cliente
-      trainer_id: "6194a177-923d-4c03-8504-2ef51df5992e", // ID do treinador
-      total_price: 50,
-      address: "Av Jose Cunha , 382",
-      availableDate:"2024-10-01T22:15:31.199Z", // Usando a data selecionada no campo `availableDate`
-      type_payment: "CARD",
-      availableDate: "T15:30:00.000Z",
-      hourClass: selectedTime,
-    };
-/*
-    axios.post(`http://${ip}:3000/trainingService`, postData)
-      .then(response => {
-        console.log('Horário atualizado com sucesso:', response.data);
-        Alert.alert('Sucesso', 'Horário atualizado com sucesso!');
-        router.push('/page/AgendamentoAula7');
-      })
-      .catch(error => {
-        console.error('Erro ao atualizar o horário:', error);
-        Alert.alert('Erro', 'Ocorreu um erro ao atualizar o horário.');
-      });
-      */
+    if (!trainer_id || !localSelectedDate) {
+      Alert.alert('Erro', 'Informações faltando. Por favor, inicie o processo novamente.');
+      return;
+    }
+
+    router.push({
+      pathname: '/page/AgendamentoAula4',
+      params: {
+        trainer_id: trainer_id.toString(),
+        selectedDate: localSelectedDate,
+        selectedTime: selectedTime,
+      },
+    });
   };
 
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
 
-  // Carrega os dados do treinador
-  useEffect(() => {
-    axios.get(`http://${ip}:3000/trainer/9e98e699-0fc3-4570-8a1a-027475d850b9`)
-      .then(response => setTrainer(response.data))
-      .catch(error => console.error('Erro ao buscar o treinador:', error));
-  }, [ip]);
-
-  const timeSlots = [
-    '08:00', '09:00', '10:00', '11:00',
-    '12:00', '13:00', '14:00', '15:00',
-    '16:00', '17:00', '18:00', '19:00'
-  ];
+  if (!localSelectedDate) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>Nenhuma data foi selecionada.</Text>
+        <Link href="/page/AgendamentoAula1" style={styles.backLink}>
+          <Text style={styles.backLinkText}>Voltar para selecionar data</Text>
+        </Link>
+      </View>
+    );
+  }
 
   return (
     <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
@@ -70,7 +92,8 @@ const AgendamentoAula3 = () => {
       </View>
 
       <Text style={styles.subtitle}>
-        Você selecionou  às {selectedTime || '---'}
+        Você selecionou a data <Text style={styles.subtitle2}>{formatDate(localSelectedDate) || '---'}</Text>{' '}
+        e o horário <Text style={styles.subtitle2}>{selectedTime || '---'}</Text>.
       </Text>
 
       <View style={styles.image}>
@@ -96,13 +119,18 @@ const AgendamentoAula3 = () => {
 
       <View style={styles.rowButton}>
         <TouchableOpacity style={styles.voltarButton}>
-          <Link style={styles.buttonText} href="/page/AgendamentoAula1">Voltar</Link>
+          <Link style={styles.buttonText} href={{
+            pathname: '/page/AgendamentoAula1',
+            params: { trainer_id: trainer_id.toString() }
+          }}>
+            Voltar
+          </Link>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.avancarButton}>
-          <Link style={styles.buttonText} href=" /page/AgendamentoAula7">Avançar</Link>
+        <TouchableOpacity style={styles.avancarButton} onPress={handleContinue}>
+          <Text style={styles.buttonText}>Avançar</Text>
         </TouchableOpacity>
-              </View>
+      </View>
     </LinearGradient>
   );
 };
@@ -130,8 +158,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     flexDirection: 'row',
-    marginTop: 40,
-  },
+    },
   title: {
     fontSize: 24,
     color: '#FFF',
@@ -141,7 +168,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 15,
     fontWeight: 'bold',
-    marginTop: 20,
+    marginTop: 100,
     color: '#FFF',
     textAlign: 'center',
     marginBottom: 50,
@@ -151,7 +178,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'yellow',
     textAlign: 'center',
-    marginBottom: 20,
   },
   timeGrid: {
     flexDirection: 'row',
@@ -196,7 +222,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: '#fff',
-    color: '#FFF',
   },
   avancarButton: {
     backgroundColor: '#191970',
@@ -204,11 +229,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     borderRadius: 30,
     borderWidth: 3,
-    borderStyle: 'solid',
     borderColor: '#faac0f',
   },
   buttonText: {
     color: '#FFF',
+  },
+  errorText: {
+    fontSize: 18,
+    color: 'red',
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
 

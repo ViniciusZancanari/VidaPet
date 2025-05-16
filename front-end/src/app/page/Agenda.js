@@ -4,6 +4,7 @@ import { Calendar } from 'react-native-calendars';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { Link } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Agenda = () => {
     const navigation = useNavigation();
@@ -12,33 +13,46 @@ const Agenda = () => {
     const [markedDates, setMarkedDates] = useState({});
     const [isLoading, setIsLoading] = useState(true);
     const [totalClasses, setTotalClasses] = useState(0);
+    const [clientId, setClientId] = useState(null);
 
-    const clientId = '9b8b0296-758d-489c-847e-043336b65f35'; // Substitua pelo ID do cliente
-
-    // Fetch data from backend
     useEffect(() => {
         const fetchClasses = async () => {
+            setIsLoading(true);
             try {
-                console.log('Fetching data from backend...');
-                const response = await fetch('http://172.29.0.1:3000/trainingService/');
+                const userData = await AsyncStorage.getItem('userData');
+                const parsedUser = JSON.parse(userData);
+                const id = parsedUser?.id;
+
+                if (!id) {
+                    console.error('ID do cliente não encontrado.');
+                    setIsLoading(false);
+                    return;
+                }
+
+                setClientId(id);
+
+                const response = await fetch('https://164.152.36.73:3000/trainingService/');
                 if (!response.ok) {
                     throw new Error(`HTTP Error! Status: ${response.status}`);
                 }
                 const data = await response.json();
-                console.log('Data fetched successfully:', data);
                 setClasses(data);
 
-                // Filtrar as aulas do cliente específico
-                const clientClasses = data.filter(item => item.client_id === clientId);
+                const clientClasses = data.filter(item => item.client_id === id);
                 setTotalClasses(clientClasses.length);
 
-                // Marcar datas no calendário
+                // Marca os dias com agendamentos
                 const dates = {};
                 clientClasses.forEach((item) => {
                     const date = item.availableDate.split('T')[0];
-                    dates[date] = { marked: true, selectedColor: '#4A55B1' };
+                    dates[date] = {
+                        marked: true,
+                        dotColor: '#4A55B1',
+                        selected: false,
+                    };
                 });
                 setMarkedDates(dates);
+
             } catch (error) {
                 console.error('Error fetching classes:', error);
             } finally {
@@ -47,50 +61,73 @@ const Agenda = () => {
         };
 
         fetchClasses();
-    }, [clientId]);
+    }, []);
 
     const handleDayPress = (day) => {
+        // Atualiza apenas o dia selecionado sem apagar os marcados
+        const updatedMarkedDates = { ...markedDates };
+
+        // Primeiro, remove qualquer seleção anterior
+        Object.keys(updatedMarkedDates).forEach(date => {
+            updatedMarkedDates[date] = {
+                ...updatedMarkedDates[date],
+                selected: false,
+            };
+        });
+
+        // Se o dia clicado já tinha marcação, mantém a bolinha e marca como selecionado
+        if (updatedMarkedDates[day.dateString]) {
+            updatedMarkedDates[day.dateString] = {
+                ...updatedMarkedDates[day.dateString],
+                selected: true,
+                selectedColor: '#4A55B1',
+            };
+        } else {
+            // Se não tinha marcação, só marca como selecionado normal
+            updatedMarkedDates[day.dateString] = {
+                selected: true,
+                selectedColor: '#4A55B1',
+            };
+        }
+
+        setMarkedDates(updatedMarkedDates);
         setSelectedDate(day.dateString);
     };
 
     return (
         <ScrollView style={styles.container}>
-            {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                    <Link href="/page/Home">
                     <Ionicons name="arrow-back" size={24} color="#EF5C43" />
+                    </Link>
                 </TouchableOpacity>
                 <Text style={styles.headerText}>AGENDA</Text>
             </View>
 
-            {/* Informações de agenda */}
             <Text style={styles.subtitle}>
                 <Text style={styles.subtitleText}>Você tem </Text>
                 <Text style={styles.highlightedText}>{totalClasses} aulas agendadas neste mês</Text>
             </Text>
 
-            {/* Calendário fixo */}
             <View style={styles.calendarContainer}>
                 <Calendar
                     onDayPress={handleDayPress}
-                    markedDates={{
-                        ...markedDates,
-                        [selectedDate]: { selected: true, marked: true, selectedColor: 'blue' },
-                    }}
+                    markedDates={markedDates}
                     theme={{
                         selectedDayBackgroundColor: '#4A55B1',
                         todayTextColor: '#EF5C43',
                         arrowColor: '#4A55B1',
+                        dotColor: '#4A55B1',
                     }}
                 />
             </View>
 
-            {/* Lista de aulas */}
             {isLoading ? (
                 <Text style={styles.loadingText}>Carregando aulas...</Text>
             ) : classes.length > 0 ? (
                 classes
-                    .filter(classItem => classItem.client_id === clientId) // Apenas aulas do cliente
+                    .filter(classItem => classItem.client_id === clientId)
                     .map((classItem) => (
                         <View key={classItem.id} style={styles.classesContainer}>
                             <Text style={styles.dateText}>
@@ -194,7 +231,6 @@ const styles = StyleSheet.create({
         justifyContent: 'space-around',
         marginTop: 10,
     },
-
     actionButton: {
         flex: 1,
         marginHorizontal: 5,
@@ -206,14 +242,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-
     actionButtonText: {
         color: '#fff',
         fontWeight: 'bold',
         fontSize: 14,
         textAlign: 'center',
     },
-
     loadingText: {
         fontSize: 16,
         textAlign: 'center',

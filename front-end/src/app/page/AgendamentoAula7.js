@@ -1,51 +1,50 @@
-import React, { useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, Alert, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Link, useRouter } from 'expo-router'; 
+import { Link, useRouter, useLocalSearchParams } from 'expo-router';
 import axios from 'axios';
-import Constants from 'expo-constants';
-import { useAgendamento } from '../context/AgendamentoContext'; // Importando o contexto de agendamento
 
 const AgendamentoAula7 = () => {
   const router = useRouter();
-  //const [ip, setIp] = useState(Constants.manifest2?.extra?.localhost || '192.168.0.6');
-/*
-  useEffect(() => {
-   
+  const { trainer_id, selectedDate, selectedTime, meetingAddress } = useLocalSearchParams();
+  const [trainer, setTrainer] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleConfirmar = async () => {
-    try {
-      if (!selectedDate || !selectedTime || selectedDate === '' || selectedTime === '') {
-        Alert.alert('Erro', 'Data ou horário não selecionados');
-        return;
-      }
-
-      const isoDateTime = convertDateTimeToISO(selectedDate, selectedTime);
-      console.log('ISO DateTime gerado:', isoDateTime); // Log da data ISO gerada
-
-      const trainingServiceData = {
-        client_id: "7a762d38-07e1-4ac8-b717-16a41cd523ec",
-        trainer_id: "6194a177-923d-4c03-8504-2ef51df5992e",
-        type_payment: "CARD",
-        address: "Av Jose Cunha , 382",
-        hourClass: selectedTime,
-        availableDate: isoDateTime,
-      };
-
-      const response = await axios.post(`http://${ip}:3000/trainingService`, trainingServiceData);
-      if (response.status === 200) {
-        Alert.alert('Sucesso', 'Agendamento confirmado!');
-        router.push('/page/AgendamentoAula8');
-      } else {
-        throw new Error('Erro ao confirmar o agendamento');
-      }
-    } catch (error) {
-      console.error('Erro ao confirmar agendamento:', error.message);
-      Alert.alert('Erro', error.message || 'Não foi possível confirmar o agendamento.');
-    }
+  const formatDate = (dateString) => {
+    if (!dateString) return '---';
+    const [year, month, day] = dateString.split('-');
+    return `${day}/${month}/${year}`;
   };
 
-  */
+  const formatTime = (timeString) => {
+    if (!timeString) return '---';
+    return `${timeString.split(':')[0]} horas`;
+  };
+
+  useEffect(() => {
+    const fetchTrainerData = async () => {
+      try {
+        const response = await axios.get(`https://164.152.36.73:3000/trainer/${trainer_id}`);
+        setTrainer(response.data);
+      } catch (error) {
+        console.error('Erro ao buscar o treinador:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (trainer_id) {
+      fetchTrainerData();
+    }
+  }, [trainer_id]);
+
+  if (loading) {
+    return (
+      <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
+        <Text style={styles.loadingText}>Carregando...</Text>
+      </LinearGradient>
+    );
+  }
 
   return (
     <ScrollView>
@@ -59,45 +58,68 @@ const AgendamentoAula7 = () => {
         <View style={styles.grafismo}>
           <Image source={require('../../../assets/grafismo.png')} />
         </View>
+        
         <View style={styles.pixIconContainer}>
           <Text style={styles.title}>Confirme o Pedido:</Text>
           <Image source={require('../../../assets/profissional.png')} />
         </View>
+        
         <View style={styles.line}>
           <Text style={styles.subtitle}>Profissional:</Text>
-          <Text style={styles.instructions}>Thiago Oliveira Freitas</Text>
+          <Text style={styles.instructions}>{trainer?.username || 'Nome não disponível'}</Text>
         </View>
+        
         <Image source={require('../../../assets/data.png')} />
         <View style={styles.line}>
           <Text style={styles.subtitle}>Data/Horário:</Text>
-          <Text style={styles.instructions}>01/11/2024 às 10 horas</Text>
+          <Text style={styles.instructions}>
+            {formatDate(selectedDate)} às {formatTime(selectedTime)}
+          </Text>
         </View>
+        
         <Image source={require('../../../assets/local.png')} />
         <View style={styles.line}>
           <Text style={styles.subtitle}>Local do Encontro:</Text>
           <Text style={styles.instructions}>
-            Av. Lorem Ipsum, 135{'\n'} Aclimação - São Paulo/SP
+            {meetingAddress || 'Endereço não especificado'}
           </Text>
-          <View style={styles.line}>
+        </View>
+        
+        <View style={styles.line}>
           <Image source={require('../../../assets/valorTrainner.png')} />
           <Text style={styles.subtitle}>Valor do serviço:</Text>
           <Text style={styles.instructions}>
-            R$ 50,00
+            R$ {trainer?.hourly_rate ? trainer.hourly_rate.toFixed(2) : '00,00'}
           </Text>
         </View>
-        </View>
+        
         <View style={styles.buttons}>
           <TouchableOpacity style={styles.dadosButton}>
             <Text style={styles.buttonText}>Alterar Dados</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.confirmarButton}>
-            <Link style={styles.buttonText} href={'/page/AgendamentoAula8'}>Confirmar</Link>
+            <Link 
+              href={{
+                pathname: '/page/AgendamentoAula8',
+                params: { 
+                  trainer_id: trainer_id.toString(),
+                  selectedDate,
+                  selectedTime,
+                  meetingAddress,
+                  serviceValue: trainer?.hourly_rate 
+                }
+              }} 
+              style={styles.buttonText}
+            >
+              Confirmar
+            </Link>
           </TouchableOpacity>
         </View>
       </LinearGradient>
     </ScrollView>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -106,6 +128,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
     width: '100%',
+    minHeight: '100%',
   },
   header: {
     position: 'absolute',
@@ -125,7 +148,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    marginBottom: 20,
     color: '#FFF',
     textAlign: 'center',
     marginBottom: 50,
@@ -133,17 +155,15 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 15,
     fontWeight: 'bold',
-    marginBottom: 20,
     color: '#FFF',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 10,
   },
   instructions: {
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 30,
     color: '#FFF',
-    textAlign: 'center',
   },
   dadosButton: {
     marginRight: 40,
@@ -154,18 +174,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#fff',
     marginBottom: 50,
-    color: '#FFF',
   },
   line: {
     borderBottomWidth: 2,
     borderBottomColor: '#F27B61',
     marginBottom: 20,
+    width: '100%',
+    alignItems: 'center',
+    paddingBottom: 20,
   },
   buttons: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 50,
+    width: '100%',
   },
   confirmarButton: {
     backgroundColor: '#191970',
@@ -174,7 +197,6 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     marginBottom: 50,
     borderWidth: 3,
-    borderStyle: 'solid',
     borderColor: '#faac0f',
   },
   buttonText: {
@@ -187,6 +209,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 70,
     left: 0,
+  },
+  loadingText: {
+    color: '#FFF',
+    fontSize: 18,
+    textAlign: 'center',
   },
 });
 

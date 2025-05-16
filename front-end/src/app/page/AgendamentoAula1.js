@@ -1,131 +1,94 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, Modal, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Link, useRouter } from 'expo-router';
+import { Link, useRouter, useLocalSearchParams } from 'expo-router';
 import { Calendar } from 'react-native-calendars';
 import axios from 'axios';
-import { NetworkInfo } from 'react-native-network-info'; // Para pegar o IP da máquina
+import Constants from 'expo-constants';
 
 const AgendamentoAula1 = () => {
   const [calendarVisible, setCalendarVisible] = useState(false);
-  const [trainer, setTrainer] = useState(null); // Estado para armazenar os dados do treinador
-  const [ip, setIp] = useState('172.29.0.1'); // Estado para armazenar o IP da máquina
-  const [selectedDate, setSelectedDate] = useState(''); // Estado local para a data selecionada
-  const [markedDates, setMarkedDates] = useState({}); // Datas marcadas no calendário
+  const [trainer, setTrainer] = useState(null);
+  const [markedDates, setMarkedDates] = useState({});
+  const [selectedDate, setSelectedDate] = useState(null);
   const router = useRouter();
+  const { trainer_id } = useLocalSearchParams();
 
-  // Função para obter o IP da máquina
   useEffect(() => {
-    NetworkInfo.getIPV4Address().then(ipAddress => {
-      setIp(ipAddress); // Armazena o IP no estado
-      console.log('IP da máquina:', ipAddress);
-    });
+    axios
+      .get('http://164.152.36.73:3000/trainingService/')
+      .then((response) => {
+        const data = response.data;
+        const dates = {};
+        data.forEach((item) => {
+          const date = item.availableDate.split('T')[0];
+          dates[date] = { marked: true, selectedColor: '#FF5733' };
+        });
+        setMarkedDates(dates);
+      })
+      .catch((error) => {
+        console.error('Erro ao buscar as aulas agendadas:', error);
+      });
   }, []);
 
-  // Função chamada ao buscar aulas agendadas
-  useEffect(() => {
-    if (ip) {
-      axios.get(`http://${ip}:3000/trainingService/`)
-        .then(response => {
-          const data = response.data;
-          const dates = {};
-
-          data.forEach(item => {
-            const date = item.availableDate.split('T')[0];
-            dates[date] = { marked: true, selectedColor: '#FF5733' };
-          });
-
-          setMarkedDates(dates);
-        })
-        .catch(error => {
-          console.error('Erro ao buscar as aulas agendadas:', error);
-        });
-    }
-  }, [ip]);
-
-  // Função chamada quando o usuário seleciona uma data no calendário
   const handleDayPress = (day) => {
-    const selectedDate = day.dateString;
-    setSelectedDate(selectedDate);
+    const selected = day.dateString;
+    const today = new Date().toISOString().split('T')[0];
 
-    if (markedDates[selectedDate]) {
-      Alert.alert('Aviso', 'Já existe um evento agendado para essa data.');
+    if (selected < today) {
+      Alert.alert('Aviso', 'Não é possível agendar em uma data anterior à data de hoje.');
       return;
     }
 
-    console.log('Data selecionada:', selectedDate);
-
-    // Preparar os dados para o POST, incluindo a data selecionada
-    const postData = {
-      client_id: "0804fac1-880f-4394-b818-368580659f43", // Exemplo de ID do cliente
-      trainer_id: "6194a177-923d-4c03-8504-2ef51df5992e", // ID do treinador
-      total_price: 50,
-      address: "Av Jose Cunha , 382",
-      hourClass: "14:30", // Horário de exemplo
-      availableDate: selectedDate + "T15:30:00.000Z", // Usando a data selecionada no campo `availableDate`
-      type_payment: "CARD",
-    };
-
-    // Fazer o POST para o backend
-    axios.post(`http://${ip}:3000/trainingService`, postData)
-      .then(response => {
-        console.log('Dados enviados com sucesso:', response.data);
-        Alert.alert('Sucesso', 'A data foi enviada com sucesso!');
-      })
-      .catch(error => {
-        console.error('Erro ao enviar os dados:', error);
-        Alert.alert('Erro', 'Ocorreu um erro ao enviar os dados.');
-      });
-
-    // Fechar o calendário
+    setSelectedDate(selected);
     setCalendarVisible(false);
 
-    // Navega para a próxima página
-    router.push('/page/AgendamentoAula3');
+    router.push({
+      pathname: '/page/AgendamentoAula3',
+      params: { 
+        trainer_id: trainer_id.toString(),
+        selectedDate: selected 
+      },
+    });
   };
 
-  // Faz a requisição para buscar os dados do treinador usando o IP dinâmico
   useEffect(() => {
-    if (ip) { // Faz a requisição somente se o IP já foi obtido
-      axios.get(`http://${ip}:3000/trainer/6194a177-923d-4c03-8504-2ef51df5992e`) // URL da API com IP dinâmico
-        .then(response => {
-          setTrainer(response.data); // Armazena os dados retornados no estado
-        })
-        .catch(error => {
-          console.error('Erro ao buscar o treinador:', error);
-        });
+    if (trainer_id) {
+      axios
+        .get(`https://164.152.36.73:3000/trainer/${trainer_id}`)
+        .then((response) => setTrainer(response.data))
+        .catch((error) => console.error('Erro ao buscar o treinador:', error));
     }
-  }, [ip]);
+  }, [trainer_id]);
 
   return (
     <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
-      {/* X no canto superior para voltar à página inicial */}
       <View style={styles.header}>
         <Link href="/page/PerfilAdestrador">
           <Text style={styles.closeButtonText}>X</Text>
         </Link>
       </View>
 
-      {/* Exibe o nome do treinador dinamicamente */}
-      <Text style={styles.subtitle}>Agende suas <Text style={styles.subtitle2}>aulas</Text></Text>
+      <Text style={styles.subtitle}>
+        Agende suas <Text style={styles.subtitle2}>aulas</Text>
+      </Text>
+
       <View style={styles.image}>
         <Image source={require('../../../assets/perfil.png')} />
         <Image source={require('../../../assets/grafismo.png')} />
       </View>
 
-      {/* Exibe o nome do treinador se disponível */}
       <Text style={styles.title}>{trainer ? trainer.username : 'Carregando nome...'}</Text>
 
-      {/* Exibe o plano selecionado */}
-      <Text style={styles.subtitle}>Você escolheu o plano <Text style={styles.subtitle2}>avulso</Text></Text>
+      <Text style={styles.subtitle}>
+        Você escolheu o plano <Text style={styles.subtitle2}>avulso</Text>
+      </Text>
 
-      {/* Botão para escolher uma data */}
       <TouchableOpacity style={styles.button} onPress={() => setCalendarVisible(true)}>
         <Image source={require('../../../assets/data.png')} />
         <Text style={styles.buttonText}>Escolha uma data</Text>
       </TouchableOpacity>
 
-      {/* Modal do calendário */}
       <Modal visible={calendarVisible} transparent={true} animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.calendarContainer}>
@@ -185,10 +148,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#191970',
     borderRadius: 10,
     alignItems: 'center',
-  },
-  closeButtonText: {
-    color: '#fff',
-    fontSize: 16,
   },
   title: {
     fontSize: 24,

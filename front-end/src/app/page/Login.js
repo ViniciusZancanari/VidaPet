@@ -1,78 +1,130 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, ScrollView, StyleSheet, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View, Text, TextInput, TouchableOpacity, Image, ScrollView,
+  StyleSheet, ActivityIndicator
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import axios from 'axios';
-import { useNavigation } from '@react-navigation/native';
-import { Link } from 'expo-router'; // Pode ser usado para outras navegações
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Link, useRouter } from 'expo-router';
+import { jwtDecode } from "jwt-decode";
 
 export const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const navigation = useNavigation();
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const router = useRouter();
 
   const handleLogin = async () => {
+    if (!email.trim() || !password.trim()) {
+      setErrorMessage('Por favor, preencha todos os campos.');
+      return;
+    }
+
+    setLoading(true);
+    setErrorMessage('');
+
     try {
-      const response = await axios.post('http://192.168.0.6:3000/client/authenticate', {
+      const response = await axios.post('https://164.152.36.73:3000/client/authenticate', {
         email,
         password,
       });
 
-      // Verifique se o login foi bem-sucedido
-      if (response.status === 200) {
-        // Navegar para a página home após o login bem-sucedido
-        console.log("DEU BOM")
-      } else {
-        throw new Error('Falha no login');
+      if (response.status === 200 && response.data.token) {
+        const token = response.data.token;
+
+        // Decodificar o token para pegar o ID
+        const decoded = jwtDecode(token);
+        const userId = decoded.sub; // pega o "sub" do token
+
+        // Agora salva o token e o id no AsyncStorage
+        await AsyncStorage.setItem('userData', JSON.stringify({
+          token,
+          id: userId,
+        }));
+
+        setIsLoggedIn(true);
       }
     } catch (error) {
       console.error('Erro na requisição:', error.response ? error.response.data : error.message);
-      Alert.alert('Erro ao realizar o login: ' + (error.response ? error.response.data.message : error.message));
+
+      if (error.response) {
+        const { status } = error.response;
+        if (status === 401) {
+          setErrorMessage('Senha errada. Digite novamente.');
+        } else if (status === 404) {
+          setErrorMessage('Usuário não existe. Por favor, clique em Cadastro.');
+        } else {
+          setErrorMessage('Erro ao realizar login. Tente novamente mais tarde.');
+        }
+      } else {
+        setErrorMessage('Erro de conexão com o servidor.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
+  useEffect(() => {
+    if (isLoggedIn) {
+      router.push('/page/Home');
+    }
+  }, [isLoggedIn]);
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Image style={styles.logo} source={require('../../../assets/logo1.png')} />
+    <View style={{ flex: 1 }}>
+      <ScrollView
+        contentContainerStyle={{ ...styles.container, flex: undefined }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Image style={styles.logo} source={require('../../../assets/logo1.png')} />
 
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>E-mail:</Text>
-        <TextInput 
-          style={styles.input} 
-          placeholder="E-mail:" 
-          placeholderTextColor="#FFF" 
-          value={email} 
-          onChangeText={setEmail} 
-        />
-        <LinearGradient colors={['#E83378', '#F47920']} style={styles.gradientLine} />
-      </View>
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>E-mail:</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="E-mail:"
+            placeholderTextColor="#FFF"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          <LinearGradient colors={['#E83378', '#F47920']} style={styles.gradientLine} />
+        </View>
 
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Senha:</Text>
-        <TextInput 
-          style={styles.input} 
-          placeholder="Senha:" 
-          placeholderTextColor="#FFF" 
-          secureTextEntry 
-          value={password} 
-          onChangeText={setPassword} 
-        />
-        <LinearGradient colors={['#E83378', '#F47920']} style={styles.gradientLine} />
-      </View>
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Senha:</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Senha:"
+            placeholderTextColor="#FFF"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
+          <LinearGradient colors={['#E83378', '#F47920']} style={styles.gradientLine} />
+        </View>
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Link style={styles.buttonText} href="/page/Home">Entrar</Link>
-      </TouchableOpacity>
+        {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
 
-      <Text style={styles.buttonText2}>Ainda não possui conta?</Text>
+        <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
+          {loading ? <ActivityIndicator color="#000" /> : <Text style={styles.buttonText}>Entrar</Text>}
+        </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button}>
-        <Link style={styles.buttonText} href="/page/Termos">Cadastre-se</Link>
-      </TouchableOpacity>
+        <Text style={styles.buttonText2}>Ainda não possui conta?</Text>
 
-      <TouchableOpacity style={styles.button}>
-        <Text style={styles.buttonText}>Fazer login com o Google</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        <TouchableOpacity style={styles.button}>
+          <Link style={styles.buttonText} href="/page/Termos">Cadastre-se</Link>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.button}>
+          <Text style={styles.buttonText}>Fazer login com o Google</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
   );
 };
 
@@ -114,8 +166,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 30,
     borderRadius: 30,
-    marginBottom: 50,
-    marginRight: 10,
+    marginBottom: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   buttonText: {
     color: '#000',
@@ -127,6 +180,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     marginTop: 20,
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 14,
+    marginBottom: 10,
+    textAlign: 'center',
   },
 });
 

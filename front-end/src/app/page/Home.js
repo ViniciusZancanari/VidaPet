@@ -3,24 +3,39 @@ import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIn
 import { Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Home = () => {
   const [trainers, setTrainers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [clientAddress, setClientAddress] = useState('');
 
   useEffect(() => {
-    const fetchTrainers = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get(`http://34.172.249.21:3000/trainer`);
-        setTrainers(response.data); // Supondo que o backend retorne um array de treinadores
+        // Buscar treinadores
+        const trainerRes = await axios.get(`https://164.152.36.73:3000/trainer`);
+        setTrainers(trainerRes.data);
+
+        // Buscar dados do client logado
+        const userData = await AsyncStorage.getItem('userData');
+        if (!userData) throw new Error('Usuário não autenticado');
+
+        const { id, token } = JSON.parse(userData);
+        const clientRes = await axios.get(`https://164.152.36.73:3000/client/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const fullAddress = clientRes.data?.address || '';
+        setClientAddress(fullAddress);
       } catch (error) {
-        console.error("Erro ao buscar treinadores:", error);
+        console.error("Erro ao carregar dados:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTrainers();
+    fetchData();
   }, []);
 
   const renderHearts = (rating) => {
@@ -39,7 +54,9 @@ const Home = () => {
     <View style={styles.container}>
       <ScrollView>
         <View style={styles.header}>
-          <Text style={styles.address}>R. Lorem Ipsum, 100</Text>
+          <Text style={styles.address} numberOfLines={2} ellipsizeMode="tail">
+            {clientAddress || 'Endereço não cadastrado'}
+          </Text>
           <View style={styles.icons}>
             <Ionicons name="filter" size={24} color="black" style={styles.icon} />
             <Link href="/page/Notificacao2" style={styles.navItem}>
@@ -73,8 +90,8 @@ const Home = () => {
                     <View style={styles.ratingRow}>
                       {renderHearts(trainer.rating)}
                     </View>
-                    <Text style={styles.cardDetails}>
-                      <Ionicons name="location" size={14} color="gray" /> {`${trainer.city}, SP • 10km`}
+                    <Text style={styles.cardDetails} numberOfLines={2} ellipsizeMode="tail">
+                      <Ionicons name="location" size={14} color="gray" /> {`${trainer.address}`}
                     </Text>
                     <Text style={styles.cardPrice}>
                       <Ionicons name="cash-outline" size={14} color="green" /> R${trainer.hourly_rate}/hora
@@ -131,26 +148,40 @@ const Home = () => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: 'white' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20 },
-  address: { fontSize: 16, fontWeight: 'bold', color: '#333' },
+  address: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    maxWidth: 200,
+    flexWrap: 'wrap',
+    flexShrink: 1
+  },
   icons: { flexDirection: 'row' },
   icon: { marginLeft: 15 },
   section: { marginVertical: 10, paddingHorizontal: 20 },
   sectionTitle: { color: '#6459D0', fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
   highlightText: { color: '#00BFFF' },
   promotionImage: { width: '100%', height: 200, borderRadius: 10 },
-  card: { flexDirection: 'row', backgroundColor: 'white', padding: 15, marginBottom: 10, borderRadius: 20, elevation: 2, shadowColor: 'black', shadowOpacity: 0.1, shadowOffset: { width: 0, height: 2 }, shadowRadius: 5 },
+  card: { flexDirection: 'row', backgroundColor: 'white', padding: 15, marginBottom: 10, borderRadius: 20, elevation: 2 },
   cardImage: { width: 60, height: 60, borderRadius: 30, borderColor: '#FFA500', borderWidth: 2 },
   premiumTag: { backgroundColor: '#00BFFF', borderRadius: 15, paddingVertical: 2, paddingHorizontal: 8, position: 'absolute', right: -100, top: -10, elevation: 3 },
   premiumText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
   ratingRow: { flexDirection: 'row', marginVertical: 5 },
-  cardDetails: { fontSize: 14, color: 'gray', marginTop: 5 },
+  cardDetails: {
+    fontSize: 14,
+    color: 'gray',
+    marginTop: 5,
+    flexShrink: 1,
+    overflow: 'hidden',
+    maxWidth: 250
+  },
   cardPrice: { fontSize: 14, color: '#0d47a1', fontWeight: 'bold', marginTop: 5 },
   cardMember: { fontSize: 12, color: 'gray', marginTop: 5 },
   navigation: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 10, borderTopWidth: 1, borderTopColor: '#e0e0e0', backgroundColor: 'white' },
   navItem: { alignItems: 'center' },
   navLink: { alignItems: 'center' },
   navContent: { alignItems: 'center' },
-  navText: { fontSize: 12, color: 'black', marginTop: 5 },
+  navText: { fontSize: 12, color: 'black', marginTop: 5 }
 });
 
 export default Home;

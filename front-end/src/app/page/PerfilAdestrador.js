@@ -9,7 +9,6 @@ import Constants from 'expo-constants'; // Para capturar as informações do dis
 const PerfilAdestrador = () => {
   const [selectedOption, setSelectedOption] = useState(null);
   const [trainer, setTrainer] = useState(null); // Estado para armazenar os dados do treinador
-  const [ip, setIp] = useState(Constants.manifest2?.extra?.localhost || '192.168.0.6'); // Defina o IP dinamicamente ou use um padrão
 
   const handleOptionPress = (option) => {
     setSelectedOption(option === selectedOption ? null : option);
@@ -17,14 +16,14 @@ const PerfilAdestrador = () => {
 
   // Busca os dados do treinador quando o componente é carregado
   useEffect(() => {
-    axios.get(`http://${ip}:3000/trainer/6194a177-923d-4c03-8504-2ef51df5992e`) // Usa o IP dinâmico
+    axios.get(`http://164.152.36.73:3000/trainer/8f8e294a-518d-46b7-80e1-e2221b2492eb`)
       .then(response => {
         setTrainer(response.data); // Armazena os dados no estado
       })
       .catch(error => {
         console.error('Erro ao buscar o treinador:', error);
       });
-  }, [ip]); // O efeito depende do IP
+  });
 
   const options = [
     { text: 'Avulso • R$50,00/aula', colors: ['#00BFFF', '#8A2BE2'], option: 'avulso' },
@@ -123,7 +122,11 @@ const PerfilAdestrador = () => {
         disabled={!selectedOption} // Desativa o clique no botão se nenhuma opção for selecionada
       >
         {selectedOption ? (
-          <Link style={styles.hireButtonText} href="/page/AgendamentoAula1">
+
+          <Link
+            style={styles.hireButtonText}
+            href={{ pathname: '/page/AgendamentoAula1', params: { trainer_id: trainer?.id } }}
+          >
             Quero contratar
           </Link>
         ) : (

@@ -1,67 +1,109 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Link } from 'expo-router';
+import { Link, useLocalSearchParams } from 'expo-router';
 import axios from 'axios';
-import Constants from 'expo-constants'; // Para capturar as informações do dispositivo
 
 const AgendamentoAula4 = () => {
-  const [trainer, setTrainer] = useState(null); // Estado para armazenar os dados do treinador
-  const [ip, setIp] = useState(Constants.manifest2?.extra?.localhost || '192.168.0.6'); // IP dinâmico ou padrão
+  const [trainer, setTrainer] = useState(null);
+  const { trainer_id, selectedDate, selectedTime } = useLocalSearchParams();
 
-  // Faz a requisição para obter os dados do trainer
+  const formatDate = (dateString) => {
+    if (!dateString) return '---';
+    const [year, month, day] = dateString.split('-');
+    return `${day}/${month}/${year.slice(2)}`;
+  };
+
+  const formatTime = (timeString) => {
+    if (!timeString) return '---';
+    return `${timeString.split(':')[0]}h`;
+  };
+
   useEffect(() => {
-    axios.get(`http://${ip}:3000/trainer/6194a177-923d-4c03-8504-2ef51df5992e`) // Usa o IP dinâmico
-      .then(response => {
-        setTrainer(response.data); // Armazena os dados do trainer no estado
-      })
-      .catch(error => {
-        console.error('Erro ao buscar o treinador:', error);
-      });
-  }, [ip]); // O efeito depende do IP
+    if (trainer_id) {
+      axios.get(`https://164.152.36.73:3000/trainer/${trainer_id}`)
+        .then(response => {
+          setTrainer(response.data);
+        })
+        .catch(error => {
+          console.error('Erro ao buscar o treinador:', error);
+        });
+    }
+  }, [trainer_id]);
 
   return (
     <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
-      {/* X no canto superior para voltar à página PerfilAdestrador */}
       <View style={styles.header}>
         <Link href="/page/PerfilAdestrador">
           <Text style={styles.closeButtonText}>X</Text>
         </Link>
       </View>
 
-      <Text style={styles.subtitle}>
-        Você selecionou o dia <Text style={styles.subtitle2}>17/08/23 às 15h</Text>
-      </Text>
-      <View style={styles.image}>
-        <Image source={require('../../../assets/perfil.png')} />
-        <Image source={require('../../../assets/grafismo.png')} />
-      </View>
+      <View style={styles.centeredContent}>
+        <Text style={styles.dateText}>
+          Você selecionou o dia <Text style={styles.highlightText}>
+            {formatDate(selectedDate)} às {formatTime(selectedTime)}
+          </Text>
+        </Text>
 
-      {/* Exibe o nome do trainer dinamicamente */}
-      <Text style={styles.title}>{trainer ? trainer.username : 'Carregando nome...'}</Text>
+        <View style={styles.trainerContainer}>
+          <View style={styles.imageContainer}>
+            <Image source={require('../../../assets/perfil.png')} style={styles.profileImage} />
+            <Image source={require('../../../assets/grafismo.png')} style={styles.decorImage} />
+          </View>
+          <Text style={styles.trainerName}>{trainer ? trainer.username : 'Carregando...'}</Text>
+        </View>
 
-      <Text style={styles.subtitle}>Local de encontro:</Text>
+        <Text style={styles.sectionTitle}>Local de encontro:</Text>
+        
+        <View style={styles.optionsContainer}>
+          <TouchableOpacity style={styles.optionButton}>
+            <Link 
+              href={{
+                pathname: '/page/Endereco1-1',
+                params: { 
+                  trainer_id: trainer_id.toString(),
+                  selectedDate,
+                  selectedTime 
+                }
+              }} 
+              style={styles.optionButtonText}
+            >
+              Utilizar o endereço cadastrado
+            </Link>
+          </TouchableOpacity>
+          
+          <Text style={styles.orText}>ou</Text>
 
-      <View>
-        <TouchableOpacity style={styles.button}>
-          <Link style={styles.buttonText} href="/page/Endereco1-1">
-            Utilizar o endereço cadastrado
-          </Link>
-        </TouchableOpacity>
-        <Text style={styles.title}>ou</Text>
+          <TouchableOpacity style={styles.optionButton}>
+            <Link 
+              href={{
+                pathname: '/page/AgendamentoAula5',
+                params: { 
+                  trainer_id: trainer_id.toString(),
+                  selectedDate,
+                  selectedTime 
+                }
+              }} 
+              style={styles.optionButtonText}
+            >
+              Marcar local de encontro
+            </Link>
+          </TouchableOpacity>
+        </View>
 
-        <TouchableOpacity style={styles.button}>
-          <Link style={styles.buttonText} href="/page/AgendamentoAula5">
-            Marcar local de encontro
-          </Link>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.line} />
-
-      <View style={styles.rowButton}>
-        <TouchableOpacity style={styles.voltarButton}>
-          <Link style={styles.buttonText} href="/page/AgendamentoAula3">
+        <View style={styles.separator} />
+        <TouchableOpacity style={styles.backButton}>
+          <Link 
+            href={{
+              pathname: '/page/AgendamentoAula3',
+              params: { 
+                trainer_id: trainer_id.toString(),
+                selectedDate 
+              }
+            }} 
+            style={styles.backButtonText}
+          >
             Voltar
           </Link>
         </TouchableOpacity>
@@ -74,93 +116,114 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
     width: '100%',
   },
   header: {
     position: 'absolute',
     top: 40,
     right: 20,
+    zIndex: 1,
   },
   closeButtonText: {
     fontSize: 24,
     color: '#fff',
     fontWeight: 'bold',
   },
-  title: {
-    fontSize: 24,
-    color: '#FFF',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  subtitle: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    marginTop: 20,
-    color: '#FFF',
-    textAlign: 'center',
-    marginBottom: 50,
-  },
-  subtitle2: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: 'yellow',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  button: {
-    backgroundColor: '#191970',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 30,
-  },
-  line: {
-    borderBottomWidth: 2,
-    borderBottomColor: '#F27B61',
-    marginVertical: 20,
+  centeredContent: {
+    flex: 1,
     width: '100%',
-  },
-  rowButton: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 20,
-    marginBottom: 50,
-  },
-  voltarButton: {
-    marginRight: 20,
-    paddingVertical: 8,
     paddingHorizontal: 30,
+  },
+  dateText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFF',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  highlightText: {
+    color: '#FFD700',
+    fontWeight: 'bold',
+  },
+  trainerContainer: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  imageContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  profileImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+  },
+  decorImage: {
+    width: 30,
+    height: 80,
+    marginLeft: -10,
+  },
+  trainerName: {
+    fontSize: 24,
+    color: '#FFF',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFF',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  optionsContainer: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  optionButton: {
+    backgroundColor: '#191970',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 30,
+    marginBottom: 15,
+    width: '100%',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#4169E1',
+  },
+  optionButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  orText: {
+    color: '#FFF',
+    fontSize: 16,
+    marginVertical: 10,
+    fontWeight: 'bold',
+  },
+  separator: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#FFA07A',
+    width: '100%',
+    marginVertical: 25,
+  },
+  backButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 40,
     borderRadius: 30,
     backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: '#fff',
-    marginBottom: 50,
-    color: '#FFF',
   },
-  avancarButton: {
-    backgroundColor: '#191970',
-    paddingVertical: 10,
-    paddingHorizontal: 50,
-    borderRadius: 30,
-    marginBottom: 50,
-    borderWidth: 3,
-    borderStyle: 'solid',
-    borderColor: '#faac0f',
-  },
-  buttonText: {
+  backButtonText: {
     color: '#fff',
     fontSize: 16,
-  },
-  image: {
-    width: 100,
-    height: 100,
-    flex: 1,
-    flexDirection: 'row',
-    top: 40,
-    left: 0,
+    fontWeight: 'bold',
   },
 });
 

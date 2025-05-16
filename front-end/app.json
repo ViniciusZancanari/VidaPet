@@ -22,7 +22,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.viniciuszancanari.VidaPet"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -30,9 +31,16 @@
     "plugins": [
       "expo-router"
     ],
-    "pages": [
-      "./src/page/Home.js",
-      "./src/page/OtherPage.js"
-    ]
+    "extra": {
+      "expo-router": {
+        "appRoot": "src/app"
+      },
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "2e66cc67-d034-45c7-8db8-c772e05e13e1"
+      }
+    }
   }
 }

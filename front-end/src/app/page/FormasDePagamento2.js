@@ -29,7 +29,7 @@ const FormasDePagamento2 = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `Bearer 8500af03efcfdedaf4aedaafc9b3a1ea`,
+                    Authorization: `Bearer TEST-1234567890abcdef1234567890abcdef`,
                 },
                 body: JSON.stringify(preference),
             });
@@ -52,15 +52,48 @@ const FormasDePagamento2 = () => {
                 {
                     method: 'GET',
                     headers: {
-                        Authorization: `Bearer TEST-7566924207219047-120113-4f46992f03f3b269603e01940e60ef75-152140602`,
+                        Authorization: `Bearer TEST-1234567890abcdef1234567890abcdef`,
                     },
                 }
             );
 
             const data = await response.json();
-            setTransacoes(data.results);
+            if (data.results && Array.isArray(data.results)) {
+                const formattedData = data.results.map(transaction => ({
+                    ...transaction,
+                    statusText: getStatusText(transaction.status),
+                    statusColor: getStatusColor(transaction.status),
+                }));
+                setTransacoes(formattedData);
+            }
         } catch (error) {
             console.error('Erro ao buscar transações:', error);
+        }
+    };
+
+    const getStatusText = (status) => {
+        switch (status) {
+            case 'approved':
+                return 'Confirmado';
+            case 'pending':
+                return 'Pendente';
+            case 'rejected':
+                return 'Cancelado';
+            default:
+                return 'Desconhecido';
+        }
+    };
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'approved':
+                return '#4CAF50'; // Verde
+            case 'pending':
+                return '#FFC107'; // Amarelo
+            case 'rejected':
+                return '#F44336'; // Vermelho
+            default:
+                return '#9E9E9E'; // Cinza
         }
     };
 
@@ -114,6 +147,9 @@ const FormasDePagamento2 = () => {
                         <Text style={styles.transacaoDetalhes}>{item.payment_method_id}</Text>
                         <Text style={styles.transacaoDetalhes}>{new Date(item.date_created).toLocaleString()}</Text>
                         <Text style={styles.transacaoValor}>R${item.transaction_amount.toFixed(2)}</Text>
+                        <View style={[styles.statusBadge, { backgroundColor: item.statusColor }]}>
+                            <Text style={styles.statusText}>{`Status: ${item.statusText}`}</Text>
+                        </View>
                     </View>
                 )}
             />
@@ -225,6 +261,18 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#EF5C43',
         marginTop: 5,
+    },
+    statusBadge: {
+        marginTop: 10,
+        paddingVertical: 4,
+        paddingHorizontal: 12,
+        borderRadius: 20,
+        alignSelf: 'flex-start',
+    },
+    statusText: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: '#fff',
     },
 });
 

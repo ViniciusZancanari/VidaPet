@@ -31,7 +31,7 @@ const Notificacao2 = () => {
                 <TouchableOpacity style={styles.backButton}>
                     <Link
                         style={styles.backButtonText}
-                        href="/page/Perfil">{'<'}
+                        href="/page/Home">{'<'}
                     </Link>
                 </TouchableOpacity>
                 <View style={styles.headerSpacer} />

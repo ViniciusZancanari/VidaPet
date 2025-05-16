@@ -5,21 +5,27 @@ import { Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
 import axios from 'axios';
 import Constants from 'expo-constants'; // Para acessar informações do dispositivo
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Perfil = () => {
   const [user, setUser] = useState(null); // Estado para armazenar os dados do usuário
-  const [ip, setIp] = useState(Constants.manifest2?.extra?.localhost || '192.168.0.6'); // Defina o IP dinamicamente ou utilize um padrão
 
-  // Faz a requisição para obter os dados do usuário
+
   useEffect(() => {
-    axios.get(`http://${ip}:3000/client/0804fac1-880f-4394-b818-368580659f43`) // URL da API com IP dinâmico
-      .then(response => {
-        setUser(response.data); // Armazena os dados do usuário no estado
-      })
-      .catch(error => {
+    const fetchUserData = async () => {
+      try {
+        const userData = await AsyncStorage.getItem('userData');
+        const user = JSON.parse(userData);
+        const response = await axios.get(`https://164.152.36.73:3000/client/${user.id}`);
+        setUser(response.data);
+      } catch (error) {
         console.error('Erro ao buscar os dados do usuário:', error);
-      });
-  }, [ip]);
+      }
+    };
+  
+    fetchUserData();
+  }, []);
+  
 
   return (
     <View style={styles.container}>

@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Checkbox from 'expo-checkbox';
-import axios from 'axios'
-import { Link } from 'expo-router';
-;
+import axios from 'axios';
+import { useRouter } from 'expo-router';
 
 const Cadastro = () => {
+  const router = useRouter();
   const [isSelected, setSelection] = useState(false);
   const [isSMSSelected, setSMSSelection] = useState(false);
   const [username, setUsername] = useState('');
@@ -17,13 +17,13 @@ const Cadastro = () => {
   const [address, setAddress] = useState('');
   const [cellphone, setCellphone] = useState('');
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (password !== confirmarSenha) {
       alert('As senhas não coincidem');
       return;
     }
 
-    axios.post('http://192.168.0.3:3000/client/', {
+    const payload = {
       username,
       password,
       email,
@@ -32,16 +32,27 @@ const Cadastro = () => {
       cellphone,
       privacy_policy: isSelected,
       sms_whatsapp_messages: isSMSSelected,
-    })
-      .then(response => {
-        console.log(response.data);
+    };
 
+    console.log('Dados enviados:', payload);
+
+    try {
+      const response = await axios.post('https://164.152.36.73:3000/client', payload);
+
+      console.log('Resposta backend:', response.data);
+
+      if (response.data && response.data.id) {
         alert('Cadastro realizado com sucesso!');
-      })
-      .catch(error => {
-        console.error('Erro na requisição:', error.response ? error.response.data : error.message);
-        alert('Erro ao realizar o cadastro: ' + (error.response ? error.response.data : error.message));
-      });
+        router.push('page/Login'); // Navegação após cadastro bem-sucedido
+      } else {
+        alert('Erro: Usuário não criado corretamente. Verifique os dados.');
+        console.warn('Resposta inesperada do servidor:', response.data);
+      }
+    } catch (error) {
+      console.error('Erro na requisição:', error.response ? error.response.data : error.message);
+
+      alert('Erro ao realizar cadastro:\n' + (error.response ? JSON.stringify(error.response.data, null, 2) : error.message));
+    }
   };
 
   return (
@@ -50,90 +61,51 @@ const Cadastro = () => {
 
       <View style={styles.inputContainer}>
         <Text style={styles.inputLabel}>Nome Completo:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Nome de usuário"
-          placeholderTextColor="#FFF"
-          value={username}
-          onChangeText={setUsername}
-        />
+        <TextInput style={styles.input} placeholder="Nome de usuário" placeholderTextColor="#FFF" value={username} onChangeText={setUsername} />
         <LinearGradient colors={['#E83378', '#F47920']} style={styles.gradientLine} />
       </View>
 
       <View style={styles.inputContainer}>
         <Text style={styles.inputLabel}>E-mail:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="E-mail"
-          placeholderTextColor="#FFF"
-          value={email}
-          onChangeText={setEmail}
-        />
+        <TextInput style={styles.input} placeholder="E-mail" placeholderTextColor="#FFF" value={email} onChangeText={setEmail} />
         <LinearGradient colors={['#E83378', '#F47920']} style={styles.gradientLine} />
       </View>
 
       <View style={styles.inputContainer}>
         <Text style={styles.inputLabel}>Celular:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Celular"
-          placeholderTextColor="#FFF"
-          value={cellphone}
-          onChangeText={setCellphone}
-        />
+        <TextInput style={styles.input} placeholder="Celular" placeholderTextColor="#FFF" value={cellphone} onChangeText={setCellphone} />
         <LinearGradient colors={['#E83378', '#F47920']} style={styles.gradientLine} />
       </View>
 
       <View style={styles.inputContainer}>
         <Text style={styles.inputLabel}>Senha:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Digite sua senha:"
-          placeholderTextColor="#FFF"
-          secureTextEntry={true}
-          value={password}
-          onChangeText={setPassword}
-        />
+        <TextInput style={styles.input} placeholder="Digite sua senha:" placeholderTextColor="#FFF" secureTextEntry value={password} onChangeText={setPassword} />
         <LinearGradient colors={['#E83378', '#F47920']} style={styles.gradientLine} />
       </View>
 
       <View style={styles.inputContainer}>
         <Text style={styles.inputLabel}>Confirmar senha:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Confirmar senha"
-          placeholderTextColor="#FFF"
-          secureTextEntry={true}
-          value={confirmarSenha}
-          onChangeText={setConfirmarSenha}
-        />
+        <TextInput style={styles.input} placeholder="Confirmar senha" placeholderTextColor="#FFF" secureTextEntry value={confirmarSenha} onChangeText={setConfirmarSenha} />
         <LinearGradient colors={['#E83378', '#F47920']} style={styles.gradientLine} />
       </View>
 
       <View style={styles.checkboxContainer}>
-        <Checkbox
-          value={isSelected}
-          onValueChange={() => setSelection(!isSelected)}
-          color={isSelected ? '#4630EB' : undefined}
-        />
+        <Checkbox value={isSelected} onValueChange={setSelection} color={isSelected ? '#4630EB' : undefined} />
         <Text style={styles.label}>Li e estou de acordo com o Termo de Uso e Política de Privacidade</Text>
       </View>
 
       <View style={styles.checkboxContainer}>
-        <Checkbox
-          value={isSMSSelected}
-          onValueChange={setSMSSelection}
-          color={isSMSSelected ? '#4630EB' : undefined}
-        />
+        <Checkbox value={isSMSSelected} onValueChange={setSMSSelection} color={isSMSSelected ? '#4630EB' : undefined} />
         <Text style={styles.label}>Aceito receber mensagens via SMS e WhatsApp</Text>
       </View>
 
       <TouchableOpacity style={styles.button} onPress={handleRegister}>
-        <Link style={styles.buttonText} href="/page/VerificarEmail">Confirmar</Link>
+        <Text style={styles.buttonText}>Confirmar</Text>
       </TouchableOpacity>
     </ScrollView>
   );
 };
+
 
 const styles = StyleSheet.create({
   contentContainer: {

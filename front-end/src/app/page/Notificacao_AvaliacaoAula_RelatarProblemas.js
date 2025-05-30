@@ -30,7 +30,7 @@ const Notificacao_AvaliacaoAulaNPS = () => {
       created_at: new Date().toISOString(),
     };
 
-    axios.post(`https://164.152.36.73:3000/reportProblem/`, updateData)
+    axios.post(`https://apipet.com.br/reportProblem/`, updateData)
       .then(response => {
         Alert.alert('Sucesso', 'Avaliação atualizada com sucesso!');
         router.push('/page/Home');

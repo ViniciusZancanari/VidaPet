@@ -23,7 +23,7 @@ const Endereco1 = () => {
                 const userData = await AsyncStorage.getItem('userData');
                 if (userData) {
                     const { id } = JSON.parse(userData);
-                    const response = await axios.get(`https://164.152.36.73:3000/client/${id}/address`);
+                    const response = await axios.get(`https://apipet.com.br/client/${id}/address`);
                     
                     if (response.data && response.data.length > 0) {
                         setAddresses(response.data.map(address => ({

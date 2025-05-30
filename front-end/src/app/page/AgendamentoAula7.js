@@ -24,7 +24,7 @@ const AgendamentoAula7 = () => {
   useEffect(() => {
     const fetchTrainerData = async () => {
       try {
-        const response = await axios.get(`https://164.152.36.73:3000/trainer/${trainer_id}`);
+        const response = await axios.get(`https://apipet.com.br/trainer/${trainer_id}`);
         setTrainer(response.data);
       } catch (error) {
         console.error('Erro ao buscar o treinador:', error);

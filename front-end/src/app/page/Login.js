@@ -27,7 +27,7 @@ export const Login = () => {
     setErrorMessage('');
 
     try {
-      const response = await axios.post('https://164.152.36.73:3000/client/authenticate', {
+      const response = await axios.post('https://apipet.com.br/client/authenticate', {
         email,
         password,
       });

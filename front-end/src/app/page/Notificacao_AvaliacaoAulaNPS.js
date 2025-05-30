@@ -33,7 +33,7 @@ const Notificacao_AvaliacaoAulaNPS = () => {
       created_at: new Date().toISOString(),
     };
 
-    axios.post(`https://164.152.36.73:3000/classEvaluation`, postData)
+    axios.post(`https://apipet.com.br/classEvaluation`, postData)
       .then(() => {
         // Redirecionar com base na avaliação
         if (ratingClass > 4) {

@@ -16,7 +16,7 @@ const Perfil = () => {
       try {
         const userData = await AsyncStorage.getItem('userData');
         const user = JSON.parse(userData);
-        const response = await axios.get(`https://164.152.36.73:3000/client/${user.id}`);
+        const response = await axios.get(`https://apipet.com.br/client/${user.id}`);
         setUser(response.data);
       } catch (error) {
         console.error('Erro ao buscar os dados do usuário:', error);

@@ -21,7 +21,7 @@ const AgendamentoAula4 = () => {
 
   useEffect(() => {
     if (trainer_id) {
-      axios.get(`https://164.152.36.73:3000/trainer/${trainer_id}`)
+      axios.get(`https://apipet.com.br/trainer/${trainer_id}`)
         .then(response => {
           setTrainer(response.data);
         })

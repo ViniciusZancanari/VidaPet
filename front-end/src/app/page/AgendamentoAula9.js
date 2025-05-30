@@ -68,7 +68,7 @@ const AgendamentoAula9 = () => {
       };
 
       const response = await axios.post(
-        'https://164.152.36.73:3000/trainingService', 
+        'https://apipet.com.br/trainingService', 
         payload,
         {
           headers: {

@@ -16,7 +16,7 @@ const PerfilAdestrador = () => {
 
   // Busca os dados do treinador quando o componente é carregado
   useEffect(() => {
-    axios.get(`http://164.152.36.73:3000/trainer/8f8e294a-518d-46b7-80e1-e2221b2492eb`)
+    axios.get(`https://apipet.com.br/trainer/8f8e294a-518d-46b7-80e1-e2221b2492eb`)
       .then(response => {
         setTrainer(response.data); // Armazena os dados no estado
       })

@@ -41,7 +41,7 @@ const DadosUsuario = () => {
           return;
         }
 
-        const response = await axios.get(`https://164.152.36.73:3000/client/${userId}`, {
+        const response = await axios.get(`https://apipet.com.br/client/${userId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -109,7 +109,7 @@ const DadosUsuario = () => {
       if (!userId || !token) throw new Error('Usuário não autenticado');
 
       const response = await axios.put(
-        `http://164.152.36.73:3000/client/${userId}`,
+        `https://apipet.com.br/client/${userId}`,
         updatedData,
         { headers: { Authorization: `Bearer ${token}` } }
       );

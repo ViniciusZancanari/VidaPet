@@ -14,7 +14,7 @@ const Home = () => {
     const fetchData = async () => {
       try {
         // Buscar treinadores
-        const trainerRes = await axios.get(`https://164.152.36.73:3000/trainer`);
+        const trainerRes = await axios.get(`https://apipet.com.br/trainer`);
         setTrainers(trainerRes.data);
 
         // Buscar dados do client logado
@@ -22,7 +22,7 @@ const Home = () => {
         if (!userData) throw new Error('Usuário não autenticado');
 
         const { id, token } = JSON.parse(userData);
-        const clientRes = await axios.get(`https://164.152.36.73:3000/client/${id}`, {
+        const clientRes = await axios.get(`https://apipet.com.br/client/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 

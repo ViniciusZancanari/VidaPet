@@ -31,7 +31,7 @@ const Agenda = () => {
 
                 setClientId(id);
 
-                const response = await fetch('https://164.152.36.73:3000/trainingService/');
+                const response = await fetch('https://apipet.com.br/trainingService/');
                 if (!response.ok) {
                     throw new Error(`HTTP Error! Status: ${response.status}`);
                 }

@@ -37,7 +37,7 @@ const Cadastro = () => {
     console.log('Dados enviados:', payload);
 
     try {
-      const response = await axios.post('https://164.152.36.73:3000/client', payload);
+      const response = await axios.post('https://apipet.com.br/client', payload);
 
       console.log('Resposta backend:', response.data);
 

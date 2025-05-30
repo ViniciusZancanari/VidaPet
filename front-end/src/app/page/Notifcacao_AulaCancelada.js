@@ -6,7 +6,6 @@ import Constants from 'expo-constants';
 
 const Notifcacao_AulaCancelada = () => {
   const router = useRouter();
-  const [ip, setIp] = useState(Constants.manifest2?.extra?.localhost || '192.168.0.6');
 
   return (
     <ScrollView>

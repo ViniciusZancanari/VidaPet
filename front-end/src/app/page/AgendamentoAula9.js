@@ -110,7 +110,7 @@ const AgendamentoAula9 = () => {
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
         <View style={styles.header}>
-          <Link href="/page/PerfilAdestrador">
+          <Link href="/page/Home">
             <Text style={styles.closeButtonText}>X</Text>
           </Link>
         </View>

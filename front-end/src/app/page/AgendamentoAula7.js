@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Link, useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import axios from 'axios';
 
 const AgendamentoAula7 = () => {
@@ -9,6 +9,9 @@ const AgendamentoAula7 = () => {
   const { trainer_id, selectedDate, selectedTime, meetingAddress } = useLocalSearchParams();
   const [trainer, setTrainer] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Define o valor fixo do serviço
+  const fixedServiceValue = 50;
 
   const formatDate = (dateString) => {
     if (!dateString) return '---';
@@ -38,6 +41,34 @@ const AgendamentoAula7 = () => {
     }
   }, [trainer_id]);
 
+  const handleClose = () => {
+    router.push('/page/Home');
+  };
+
+  const handleAlterarDados = () => {
+    router.push({
+      pathname: '/page/AgendamentoAula5', // Ou a tela anterior correta para edição
+      params: {
+        trainer_id: trainer_id,
+        selectedDate,
+        selectedTime,
+      }
+    });
+  };
+
+  const handleConfirmar = () => {
+    router.push({
+      pathname: '/page/AgendamentoAula8',
+      params: {
+        trainer_id: trainer_id.toString(),
+        selectedDate,
+        selectedTime,
+        meetingAddress,
+        serviceValue: fixedServiceValue // MODIFICADO: Passar o valor fixo do serviço
+      }
+    });
+  };
+
   if (loading) {
     return (
       <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
@@ -50,25 +81,25 @@ const AgendamentoAula7 = () => {
     <ScrollView>
       <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
         <View style={styles.header}>
-          <Link href="/page/PerfilAdestrador">
+          <TouchableOpacity onPress={handleClose}>
             <Text style={styles.closeButtonText}>X</Text>
-          </Link>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.grafismo}>
           <Image source={require('../../../assets/grafismo.png')} />
         </View>
-        
+
         <View style={styles.pixIconContainer}>
           <Text style={styles.title}>Confirme o Pedido:</Text>
           <Image source={require('../../../assets/profissional.png')} />
         </View>
-        
+
         <View style={styles.line}>
           <Text style={styles.subtitle}>Profissional:</Text>
           <Text style={styles.instructions}>{trainer?.username || 'Nome não disponível'}</Text>
         </View>
-        
+
         <Image source={require('../../../assets/data.png')} />
         <View style={styles.line}>
           <Text style={styles.subtitle}>Data/Horário:</Text>
@@ -76,7 +107,7 @@ const AgendamentoAula7 = () => {
             {formatDate(selectedDate)} às {formatTime(selectedTime)}
           </Text>
         </View>
-        
+
         <Image source={require('../../../assets/local.png')} />
         <View style={styles.line}>
           <Text style={styles.subtitle}>Local do Encontro:</Text>
@@ -84,35 +115,22 @@ const AgendamentoAula7 = () => {
             {meetingAddress || 'Endereço não especificado'}
           </Text>
         </View>
-        
+
         <View style={styles.line}>
           <Image source={require('../../../assets/valorTrainner.png')} />
           <Text style={styles.subtitle}>Valor do serviço:</Text>
           <Text style={styles.instructions}>
-            R$ {trainer?.hourly_rate ? trainer.hourly_rate.toFixed(2) : '00,00'}
+            {/* MODIFICADO: Exibir o valor fixo do serviço */}
+            R$ {fixedServiceValue.toFixed(2).replace('.', ',')}
           </Text>
         </View>
-        
+
         <View style={styles.buttons}>
-          <TouchableOpacity style={styles.dadosButton}>
+          <TouchableOpacity style={styles.dadosButton} onPress={handleAlterarDados}>
             <Text style={styles.buttonText}>Alterar Dados</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.confirmarButton}>
-            <Link 
-              href={{
-                pathname: '/page/AgendamentoAula8',
-                params: { 
-                  trainer_id: trainer_id.toString(),
-                  selectedDate,
-                  selectedTime,
-                  meetingAddress,
-                  serviceValue: trainer?.hourly_rate 
-                }
-              }} 
-              style={styles.buttonText}
-            >
-              Confirmar
-            </Link>
+          <TouchableOpacity style={styles.confirmarButton} onPress={handleConfirmar}>
+            <Text style={styles.buttonText}>Confirmar</Text>
           </TouchableOpacity>
         </View>
       </LinearGradient>
@@ -134,6 +152,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 40,
     right: 20,
+    zIndex: 1,
   },
   closeButtonText: {
     fontSize: 24,

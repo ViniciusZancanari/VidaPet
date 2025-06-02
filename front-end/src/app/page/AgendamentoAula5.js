@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, TextInput } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Link, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router'; // Importar useRouter
 import axios from 'axios';
 
 const AgendamentoAula5 = () => {
   const [trainer, setTrainer] = useState(null);
   const [address, setAddress] = useState('');
   const { trainer_id, selectedDate, selectedTime } = useLocalSearchParams();
+  const router = useRouter(); // Inicializar o router
 
   const formatDate = (dateString) => {
     if (!dateString) return '---';
@@ -32,12 +33,41 @@ const AgendamentoAula5 = () => {
     }
   }, [trainer_id]);
 
+  const handleClose = () => {
+    router.push('/page/Home');
+  };
+
+  const handleGoBack = () => {
+    router.push({
+      pathname: '/page/AgendamentoAula4',
+      params: {
+        trainer_id: trainer_id.toString(),
+        selectedDate,
+        selectedTime
+      }
+    });
+  };
+
+  const handleGoNext = () => {
+    if (address) {
+      router.push({
+        pathname: '/page/AgendamentoAula7',
+        params: {
+          trainer_id: trainer_id.toString(),
+          selectedDate,
+          selectedTime,
+          meetingAddress: address
+        }
+      });
+    }
+  };
+
   return (
     <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
       <View style={styles.header}>
-        <Link href="/page/PerfilAdestrador">
+        <TouchableOpacity onPress={handleClose}>
           <Text style={styles.closeButtonText}>X</Text>
-        </Link>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.centeredContent}>
@@ -71,40 +101,16 @@ const AgendamentoAula5 = () => {
         </View>
 
         <View style={styles.buttonRow}>
-          <TouchableOpacity style={styles.backButton}>
-            <Link
-              href={{
-                pathname: '/page/AgendamentoAula4',
-                params: { 
-                  trainer_id: trainer_id.toString(),
-                  selectedDate,
-                  selectedTime 
-                }
-              }}
-              style={styles.buttonText}
-            >
-              Voltar
-            </Link>
+          <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
+            <Text style={styles.buttonText}>Voltar</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.nextButton, !address && styles.nextButtonDisabled]}
             disabled={!address}
+            onPress={handleGoNext}
           >
-            <Link
-              href={{
-                pathname: '/page/AgendamentoAula7',
-                params: {
-                  trainer_id: trainer_id.toString(),
-                  selectedDate,
-                  selectedTime,
-                  meetingAddress: address
-                }
-              }}
-              style={styles.buttonText}
-            >
-              Avançar
-            </Link>
+            <Text style={styles.buttonText}>Avançar</Text>
           </TouchableOpacity>
         </View>
       </View>

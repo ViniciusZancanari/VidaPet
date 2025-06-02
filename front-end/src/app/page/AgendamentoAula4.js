@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator } from 'react-native'; // Removido Alert se não for usado, ActivityIndicator pode ser removido se não tiver estado de loading aqui.
 import { LinearGradient } from 'expo-linear-gradient';
-import { Link, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router'; // Importar useRouter
 import axios from 'axios';
 
 const AgendamentoAula4 = () => {
   const [trainer, setTrainer] = useState(null);
+  const [loadingTrainer, setLoadingTrainer] = useState(true); // Estado de loading para o treinador
+  const router = useRouter(); // Instanciar o router
   const { trainer_id, selectedDate, selectedTime } = useLocalSearchParams();
 
   const formatDate = (dateString) => {
     if (!dateString) return '---';
     const [year, month, day] = dateString.split('-');
-    return `${day}/${month}/${year.slice(2)}`;
+    // Mostra apenas os dois últimos dígitos do ano
+    return `${day}/${month}/${year.slice(2)}`; 
   };
 
   const formatTime = (timeString) => {
@@ -20,23 +23,73 @@ const AgendamentoAula4 = () => {
   };
 
   useEffect(() => {
+    let isActive = true;
     if (trainer_id) {
+      setLoadingTrainer(true);
       axios.get(`https://apipet.com.br/trainer/${trainer_id}`)
         .then(response => {
-          setTrainer(response.data);
+          if (isActive) {
+            setTrainer(response.data);
+            setLoadingTrainer(false);
+          }
         })
         .catch(error => {
-          console.error('Erro ao buscar o treinador:', error);
+          if (isActive) {
+            console.error('Erro ao buscar o treinador:', error);
+            setLoadingTrainer(false);
+          }
         });
+    } else {
+      setLoadingTrainer(false); // Não há trainer_id para buscar
     }
+    return () => {
+      isActive = false;
+    };
   }, [trainer_id]);
+
+  // Funções de navegação
+  const navigateToPerfilAdestrador = () => {
+    router.push('/page/Home');
+  };
+
+  const navigateToEnderecoCadastrado = () => {
+    router.push({
+      pathname: '/page/Endereco1-1',
+      params: { 
+        trainer_id, // trainer_id de useLocalSearchParams já é string
+        selectedDate,
+        selectedTime 
+      }
+    });
+  };
+
+  const navigateToMarcarLocal = () => {
+    router.push({
+      pathname: '/page/AgendamentoAula5',
+      params: { 
+        trainer_id,
+        selectedDate,
+        selectedTime 
+      }
+    });
+  };
+
+  const navigateToVoltar = () => {
+    router.push({
+      pathname: '/page/AgendamentoAula3',
+      params: { 
+        trainer_id,
+        selectedDate 
+      }
+    });
+  };
 
   return (
     <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
       <View style={styles.header}>
-        <Link href="/page/PerfilAdestrador">
+        <TouchableOpacity onPress={navigateToPerfilAdestrador}>
           <Text style={styles.closeButtonText}>X</Text>
-        </Link>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.centeredContent}>
@@ -48,64 +101,43 @@ const AgendamentoAula4 = () => {
 
         <View style={styles.trainerContainer}>
           <View style={styles.imageContainer}>
-            <Image source={require('../../../assets/perfil.png')} style={styles.profileImage} />
+            {/* Supondo que a imagem do trainer venha do objeto trainer ou um placeholder */}
+            <Image 
+              source={trainer && trainer.profileImageUrl ? { uri: trainer.profileImageUrl } : require('../../../assets/perfil.png')} 
+              style={styles.profileImage} 
+            />
             <Image source={require('../../../assets/grafismo.png')} style={styles.decorImage} />
           </View>
-          <Text style={styles.trainerName}>{trainer ? trainer.username : 'Carregando...'}</Text>
+          {loadingTrainer ? (
+            <ActivityIndicator size="small" color="#FFF" style={{marginTop: 10}} />
+          ) : (
+            <Text style={styles.trainerName}>{trainer ? trainer.username : 'Treinador não encontrado'}</Text>
+          )}
         </View>
 
         <Text style={styles.sectionTitle}>Local de encontro:</Text>
         
         <View style={styles.optionsContainer}>
-          <TouchableOpacity style={styles.optionButton}>
-            <Link 
-              href={{
-                pathname: '/page/Endereco1-1',
-                params: { 
-                  trainer_id: trainer_id.toString(),
-                  selectedDate,
-                  selectedTime 
-                }
-              }} 
-              style={styles.optionButtonText}
-            >
+          <TouchableOpacity style={styles.optionButton} onPress={navigateToEnderecoCadastrado}>
+            <Text style={styles.optionButtonText}>
               Utilizar o endereço cadastrado
-            </Link>
+            </Text>
           </TouchableOpacity>
           
           <Text style={styles.orText}>ou</Text>
 
-          <TouchableOpacity style={styles.optionButton}>
-            <Link 
-              href={{
-                pathname: '/page/AgendamentoAula5',
-                params: { 
-                  trainer_id: trainer_id.toString(),
-                  selectedDate,
-                  selectedTime 
-                }
-              }} 
-              style={styles.optionButtonText}
-            >
+          <TouchableOpacity style={styles.optionButton} onPress={navigateToMarcarLocal}>
+            <Text style={styles.optionButtonText}>
               Marcar local de encontro
-            </Link>
+            </Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.separator} />
-        <TouchableOpacity style={styles.backButton}>
-          <Link 
-            href={{
-              pathname: '/page/AgendamentoAula3',
-              params: { 
-                trainer_id: trainer_id.toString(),
-                selectedDate 
-              }
-            }} 
-            style={styles.backButtonText}
-          >
+        <TouchableOpacity style={styles.backButton} onPress={navigateToVoltar}>
+          <Text style={styles.backButtonText}>
             Voltar
-          </Link>
+          </Text>
         </TouchableOpacity>
       </View>
     </LinearGradient>
@@ -115,14 +147,14 @@ const AgendamentoAula4 = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#fff', // Este backgroundColor é sobreposto pelo LinearGradient
     width: '100%',
   },
   header: {
     position: 'absolute',
-    top: 40,
+    top: 40, // Considere usar Platform.OS para ajuste iOS/Android se necessário
     right: 20,
-    zIndex: 1,
+    zIndex: 1, // Para garantir que fique sobre outros elementos se houver sobreposição
   },
   closeButtonText: {
     fontSize: 24,
@@ -134,7 +166,7 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 30,
+    paddingHorizontal: 30, // Adicionado padding horizontal consistente
   },
   dateText: {
     fontSize: 16,
@@ -144,7 +176,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   highlightText: {
-    color: '#FFD700',
+    color: '#FFD700', // Cor de destaque (amarelo)
     fontWeight: 'bold',
   },
   trainerContainer: {
@@ -153,18 +185,20 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'center', // Para alinhar grafismo com a imagem de perfil
     marginBottom: 15,
   },
   profileImage: {
     width: 80,
     height: 80,
     borderRadius: 40,
+    // Adicione um backgroundColor para o caso da imagem não carregar ou ser transparente
+    backgroundColor: '#ccc', 
   },
-  decorImage: {
+  decorImage: { // Imagem de grafismo
     width: 30,
-    height: 80,
-    marginLeft: -10,
+    height: 80, // Altura igual à da imagem de perfil para alinhar
+    marginLeft: -10, // Sobreposição sutil para efeito de design
   },
   trainerName: {
     fontSize: 24,
@@ -180,20 +214,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   optionsContainer: {
-    width: '100%',
-    alignItems: 'center',
+    width: '100%', // Para os botões ocuparem a largura definida pelo padding do parent
+    alignItems: 'center', // Para centralizar o texto "ou" se ele não ocupar 100%
     marginBottom: 30,
   },
   optionButton: {
-    backgroundColor: '#191970',
+    backgroundColor: '#191970', // Azul escuro (cor do botão)
     paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderRadius: 30,
-    marginBottom: 15,
-    width: '100%',
-    alignItems: 'center',
+    paddingHorizontal: 20, // Padding interno do botão
+    borderRadius: 30,    // Bordas arredondadas
+    marginBottom: 15,    // Espaço abaixo de cada botão
+    width: '100%',       // Botão ocupa toda a largura disponível
+    alignItems: 'center',  // Centraliza o texto do botão
     borderWidth: 2,
-    borderColor: '#4169E1',
+    borderColor: '#4169E1', // Cor da borda (azul royal)
   },
   optionButtonText: {
     color: '#fff',
@@ -203,22 +237,22 @@ const styles = StyleSheet.create({
   orText: {
     color: '#FFF',
     fontSize: 16,
-    marginVertical: 10,
+    marginVertical: 10, // Espaço acima e abaixo do "ou"
     fontWeight: 'bold',
   },
   separator: {
     borderBottomWidth: 1,
-    borderBottomColor: '#FFA07A',
-    width: '100%',
-    marginVertical: 25,
+    borderBottomColor: '#FFA07A', // Cor do separador (salmão claro)
+    width: '100%', // Separador ocupa toda a largura
+    marginVertical: 25, // Espaço vertical ao redor do separador
   },
   backButton: {
     paddingVertical: 12,
     paddingHorizontal: 40,
     borderRadius: 30,
-    backgroundColor: 'transparent',
+    backgroundColor: 'transparent', // Fundo transparente
     borderWidth: 1,
-    borderColor: '#fff',
+    borderColor: '#fff', // Borda branca
   },
   backButtonText: {
     color: '#fff',

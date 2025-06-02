@@ -17,43 +17,47 @@ const Cadastro = () => {
   const [address, setAddress] = useState('');
   const [cellphone, setCellphone] = useState('');
 
-  const handleRegister = async () => {
-    if (password !== confirmarSenha) {
-      alert('As senhas não coincidem');
-      return;
-    }
+ const handleRegister = async () => {
+  if (!username || !password || !confirmarSenha || !email ||  !cellphone) {
+    alert('Preencha todos os campos');
+    return;
+  }
 
-    const payload = {
-      username,
-      password,
-      email,
-      CPF,
-      address,
-      cellphone,
-      privacy_policy: isSelected,
-      sms_whatsapp_messages: isSMSSelected,
-    };
+  if (password !== confirmarSenha) {
+    alert('As senhas não coincidem');
+    return;
+  }
 
-    console.log('Dados enviados:', payload);
-
-    try {
-      const response = await axios.post('https://apipet.com.br/client', payload);
-
-      console.log('Resposta backend:', response.data);
-
-      if (response.data && response.data.id) {
-        alert('Cadastro realizado com sucesso!');
-        router.push('page/Login'); // Navegação após cadastro bem-sucedido
-      } else {
-        alert('Erro: Usuário não criado corretamente. Verifique os dados.');
-        console.warn('Resposta inesperada do servidor:', response.data);
-      }
-    } catch (error) {
-      console.error('Erro na requisição:', error.response ? error.response.data : error.message);
-
-      alert('Erro ao realizar cadastro:\n' + (error.response ? JSON.stringify(error.response.data, null, 2) : error.message));
-    }
+  const payload = {
+    username,
+    password,
+    email,
+    cellphone,
+    privacy_policy: isSelected,
+    sms_whatsapp_messages: isSMSSelected,
   };
+
+  console.log('Dados enviados:', payload);
+
+  try {
+    const response = await axios.post('https://apipet.com.br/client', payload);
+
+    console.log('Resposta backend:', response.data);
+
+    if (response.data && response.data.id) {
+      alert('Cadastro realizado com sucesso!');
+      router.push('page/Home');
+    } else {
+      alert('Erro: Usuário não criado corretamente. Verifique os dados.');
+      console.warn('Resposta inesperada do servidor:', response.data);
+    }
+  } catch (error) {
+    console.error('Erro na requisição:', error.response ? error.response.data : error.message);
+
+    alert('Erro ao realizar cadastro:\n' + (error.response ? JSON.stringify(error.response.data, null, 2) : error.message));
+  }
+};
+
 
   return (
     <ScrollView contentContainerStyle={styles.contentContainer}>
@@ -112,7 +116,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     backgroundColor: '#0d47a1',
     alignItems: 'center',
-    paddingVertical: 20,
   },
   logo: {
     width: '100%',

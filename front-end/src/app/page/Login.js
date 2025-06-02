@@ -74,9 +74,8 @@ export const Login = () => {
   }, [isLoggedIn]);
 
   return (
-    <View style={{ flex: 1 }}>
       <ScrollView
-        contentContainerStyle={{ ...styles.container, flex: undefined }}
+        contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
       >
         <Image style={styles.logo} source={require('../../../assets/logo1.png')} />
@@ -116,23 +115,30 @@ export const Login = () => {
 
         <Text style={styles.buttonText2}>Ainda não possui conta?</Text>
 
-        <TouchableOpacity style={styles.button}>
-          <Link style={styles.buttonText} href="/page/Termos">Cadastre-se</Link>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => router.push('/page/Termos')} // Navegação via router
+          activeOpacity={0.7}
+        >
+          <Text style={styles.buttonText}>Cadastre-se</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.button}>
           <Text style={styles.buttonText}>Fazer login com o Google</Text>
         </TouchableOpacity>
       </ScrollView>
-    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  gradientContainer: {
     flex: 1,
-    backgroundColor: '#0d47a1',
+  },
+  container: {
+    flexGrow: 1,
     alignItems: 'center',
+  
+    backgroundColor: '#1C4175'
   },
   logo: {
     width: '100%',

@@ -1,29 +1,61 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 import axios from 'axios';
-import Constants from 'expo-constants'; // Para capturar as informações do dispositivo
 
 const PerfilAdestrador = () => {
   const [selectedOption, setSelectedOption] = useState(null);
-  const [trainer, setTrainer] = useState(null); // Estado para armazenar os dados do treinador
+  const [trainer, setTrainer] = useState(null);
+  const [loadingTrainer, setLoadingTrainer] = useState(true);
+  const router = useRouter();
 
   const handleOptionPress = (option) => {
     setSelectedOption(option === selectedOption ? null : option);
   };
 
-  // Busca os dados do treinador quando o componente é carregado
   useEffect(() => {
+    let isActive = true;
+    setLoadingTrainer(true);
     axios.get(`https://apipet.com.br/trainer/8f8e294a-518d-46b7-80e1-e2221b2492eb`)
       .then(response => {
-        setTrainer(response.data); // Armazena os dados no estado
+        if (isActive) {
+          setTrainer(response.data);
+          setLoadingTrainer(false);
+        }
       })
       .catch(error => {
-        console.error('Erro ao buscar o treinador:', error);
+        if (isActive) {
+          console.warn('--- DETALHES DO ERRO AXIOS AO BUSCAR TREINADOR ---');
+          if (error.response) {
+            // A requisição foi feita e o servidor respondeu com um status code fora do range de 2xx
+            console.warn("Dados da Resposta do Erro:", JSON.stringify(error.response.data, null, 2));
+            console.warn("Status da Resposta do Erro:", error.response.status);
+            console.warn("Cabeçalhos da Resposta do Erro:", JSON.stringify(error.response.headers, null, 2));
+          } else if (error.request) {
+            // A requisição foi feita mas nenhuma resposta foi recebida
+            console.warn("Erro na Requisição (sem resposta):", error.request);
+          } else {
+            // Algo aconteceu na configuração da requisição que acionou um Erro
+            console.warn('Mensagem de Erro Geral:', error.message);
+          }
+          // Log do objeto de erro completo pode ser útil, mas pode ser grande
+          // console.warn("Objeto de Erro Completo:", error);
+          console.warn('--- FIM DETALHES DO ERRO AXIOS ---');
+          
+          setLoadingTrainer(false);
+          Alert.alert(
+            "Erro ao Carregar", 
+            "Não foi possível buscar os dados do treinador. Verifique sua conexão ou tente mais tarde."
+          );
+        }
       });
-  });
+    
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   const options = [
     { text: 'Avulso • R$50,00/aula', colors: ['#00BFFF', '#8A2BE2'], option: 'avulso' },
@@ -33,39 +65,63 @@ const PerfilAdestrador = () => {
     { text: 'Semestral • 2x por semana - R$44,00/aula', colors: ['#00BFFF', '#8A2BE2'], option: 'semestral2' },
   ];
 
+  const handleHirePress = () => {
+    if (selectedOption && trainer && trainer.id) {
+      router.push({
+        pathname: '/page/AgendamentoAula1',
+        params: { trainer_id: trainer.id } 
+      });
+    } else if (selectedOption && (!trainer || !trainer.id)) {
+        Alert.alert("Aguarde", "Os dados do treinador não estão disponíveis ou ainda estão carregando. Tente novamente em instantes.");
+    }
+  };
+
+  if (loadingTrainer && !trainer) { 
+    return (
+        <View style={[styles.container, styles.loadingView]}>
+            <ActivityIndicator size="large" color="#0d47a1" />
+            <Text style={styles.loadingText}>Carregando perfil do adestrador...</Text>
+        </View>
+    );
+  }
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.header}>
-        {/* Exibe o endereço dinamicamente se disponível */}
-        <Text style={styles.address}>{trainer ? trainer.address : 'Carregando endereço...'}</Text>
+        <Text style={styles.address} numberOfLines={1} ellipsizeMode="tail">
+          {trainer ? trainer.address : 'Carregando endereço...'}
+        </Text>
         <View style={styles.headerIcons}>
-          <Ionicons name="search" size={24} color="black" style={styles.icon} />
-          <Ionicons name="notifications" size={24} color="black" style={styles.icon} />
+          <Ionicons name="search-outline" size={24} color="black" style={styles.icon} />
+          <Ionicons name="notifications-outline" size={24} color="black" style={styles.icon} />
         </View>
       </View>
 
       <View style={styles.image}>
-        <Image source={require('../../../assets/perfil.png')} />
-        <Image source={require('../../../assets/grafismo.png')} />
+        <Image 
+            source={trainer && trainer.profile_image_url ? { uri: trainer.profile_image_url } : require('../../../assets/perfil.png')} 
+            style={styles.profileImageStyle} 
+        />
+        <Image source={require('../../../assets/grafismo.png')} style={styles.grafismoImageStyle} />
       </View>
 
       <View style={styles.profileContainer}>
-        {/* Exibe o nome, avaliações e localização dinamicamente */}
         <Text style={styles.name}>{trainer ? trainer.username : 'Carregando nome...'}</Text>
         <Text style={styles.reviews}>2 avaliações</Text>
         <View style={styles.locationContainer}>
-          <Ionicons name="location" size={16} color="gray" />
+          <Ionicons name="location-outline" size={16} color="gray" />
           <Text style={styles.location}>
-            {trainer ? `${trainer.city}, ${trainer.CPF.slice(0, 3)}...` : 'Carregando localização...'}
+            {trainer ? `${trainer.city || 'Cidade não informada'}, ${trainer.state_initials || 'UF'}` : 'Carregando localização...'}
           </Text>
         </View>
-        <Text style={styles.price}>{trainer ? `R$${trainer.hourly_rate}/hora` : 'Carregando preço...'}</Text>
+        <Text style={styles.price}>
+          {trainer && trainer.hourly_rate ? `R$${parseFloat(trainer.hourly_rate).toFixed(2).replace('.',',')}/hora` : 'Carregando preço...'}
+        </Text>
       </View>
 
       <Text style={styles.sectionTitle}>
         Sobre o <Text style={styles.highlight}>profissional:</Text>
       </Text>
-      {/* Exibe a descrição profissional */}
       <Text style={styles.description}>
         {trainer ? trainer.professional_description : 'Carregando descrição...'}
       </Text>
@@ -118,20 +174,11 @@ const PerfilAdestrador = () => {
       </View>
 
       <TouchableOpacity
-        style={[styles.hireButton, { backgroundColor: selectedOption ? '#0d47a1' : '#d3d3d3' }]} // Alteração para mudar a cor
-        disabled={!selectedOption} // Desativa o clique no botão se nenhuma opção for selecionada
+        style={[styles.hireButton, { backgroundColor: selectedOption && trainer && !loadingTrainer ? '#0d47a1' : '#d3d3d3' }]}
+        disabled={!selectedOption || !trainer || loadingTrainer}
+        onPress={handleHirePress}
       >
-        {selectedOption ? (
-
-          <Link
-            style={styles.hireButtonText}
-            href={{ pathname: '/page/AgendamentoAula1', params: { trainer_id: trainer?.id } }}
-          >
-            Quero contratar
-          </Link>
-        ) : (
-          <Text style={styles.hireButtonText}>Quero contratar</Text> // Apenas mostra o texto sem link
-        )}
+        <Text style={styles.hireButtonText}>Quero contratar</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -141,17 +188,31 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     backgroundColor: 'white',
-    padding: 20,
+    paddingHorizontal: 20, // Adicionado paddingHorizontal
+    paddingBottom: 40, // Adicionado paddingBottom para mais espaço no final
+  },
+  loadingView: { 
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 0, // Remover padding vertical se for tela cheia de loading
+  },
+  loadingText: { // Estilo para o texto de loading
+    marginTop: 10,
+    fontSize: 16,
+    color: 'gray',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: Platform.OS === 'ios' ? 40 : 20, // Espaço do topo
     marginBottom: 20,
   },
   address: {
     fontSize: 16,
     fontWeight: 'bold',
+    flex: 1, // Permite que o endereço ocupe espaço disponível
+    marginRight: 10, // Espaço antes dos ícones
   },
   headerIcons: {
     flexDirection: 'row',
@@ -160,45 +221,54 @@ const styles = StyleSheet.create({
     marginLeft: 15,
   },
   hireButton: {
-    backgroundColor: '#0d47a1',
-    paddingVertical: 10,
+    paddingVertical: 15, 
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 20,
-    borderRadius: 5,
+    marginTop: 20, // Ajustado marginTop
+    marginBottom: 20, // Adicionado marginBottom
+    borderRadius: 8, 
   },
   hireButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
   },
-  image: {
-    width: 100,
-    height: 100,
-    flex: 1,
+  image: { 
     flexDirection: 'row',
     alignItems: 'center',
-    top: 40,
-    left: 0,
-    marginBottom: 50,
-    marginLeft: 100,
+    justifyContent: 'center', 
+    marginBottom: 20, 
+  },
+  profileImageStyle: { // Estilo específico para a imagem de perfil do adestrador
+    width: 80, 
+    height: 80, 
+    borderRadius: 40,
+    backgroundColor: '#e0e0e0', // Placeholder visual
+  },
+  grafismoImageStyle: { // Estilo específico para a imagem de grafismo
+    width: 30, // Exemplo
+    height: 80, // Exemplo
+    marginLeft: -15, // Exemplo de sobreposição ou ajuste
+    // Adicione outros estilos se necessário
   },
   profileContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 30, // Aumentado
   },
   name: {
-    fontSize: 20,
+    fontSize: 22, 
     fontWeight: 'bold',
+    marginBottom: 5, 
   },
   reviews: {
     fontSize: 14,
     color: 'gray',
-    marginBottom: 10,
+    marginBottom: 8, // Aumentado
   },
   locationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 8, // Aumentado
   },
   location: {
     fontSize: 14,
@@ -206,15 +276,16 @@ const styles = StyleSheet.create({
     marginLeft: 5,
   },
   price: {
-    fontSize: 16,
+    fontSize: 18, 
     color: '#0d47a1',
     fontWeight: 'bold',
+    marginTop: 5, 
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginTop: 20,
-    marginBottom: 10,
+    marginTop: 25, // Aumentado
+    marginBottom: 15, // Aumentado
   },
   highlight: {
     color: '#00BFFF',
@@ -222,24 +293,26 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 14,
     color: 'gray',
-    marginBottom: 10,
+    marginBottom: 20, // Aumentado
+    lineHeight: 20, 
   },
   photo: {
     width: '100%',
     height: 200,
     borderRadius: 10,
     marginBottom: 20,
+    backgroundColor: '#e0e0e0', 
   },
   video: {
     width: '100%',
     height: 200,
     borderRadius: 10,
     marginBottom: 20,
+    backgroundColor: '#e0e0e0', 
   },
   review: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 15, 
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
@@ -249,12 +322,13 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     marginRight: 10,
+    marginTop: 5, 
   },
   reviewContent: {
     flex: 1,
   },
   reviewName: {
-    fontSize: 14,
+    fontSize: 15, 
     fontWeight: 'bold',
   },
   reviewDate: {
@@ -265,15 +339,17 @@ const styles = StyleSheet.create({
   reviewText: {
     fontSize: 14,
     color: 'gray',
+    lineHeight: 18, 
   },
   optionContainer: {
     marginBottom: 20,
+    width: '100%', 
   },
   option: {
-    paddingVertical: 15,
+    paddingVertical: 15, 
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 5,
+    borderRadius: 8, 
     marginBottom: 10,
   },
   optionText: {
@@ -284,7 +360,8 @@ const styles = StyleSheet.create({
   sectionSubtitle: {
     fontSize: 14,
     color: 'gray',
-    marginBottom: 10,
+    marginBottom: 15, // Aumentado
+    textAlign: 'center', 
   },
 });
 

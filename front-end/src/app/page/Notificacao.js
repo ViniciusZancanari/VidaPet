@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Link } from 'expo-router';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 
 const NotificationItem = ({ title, time }) => {
@@ -31,12 +32,11 @@ const Notificacao = () => {
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <TouchableOpacity style={styles.backButton}>
-                    <Link
-                        style={styles.backButtonText}
-                        href="/page/Perfil">{'<'}
-                    </Link>
-                </TouchableOpacity>
+               <TouchableOpacity style={styles.backButton}>
+                         <Link href="/page/Perfil" style={styles.navItem}>
+                          <Icon name="arrow-back" size={24} color="#ff1744" />
+                         </Link>
+                       </TouchableOpacity>
                 <View style={styles.headerSpacer} />
                 <Text style={styles.headerText}>NOTIFICAÇÕES</Text>
                 <View style={styles.headerSpacer} />

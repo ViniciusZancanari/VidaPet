@@ -13,11 +13,9 @@ const Home = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Buscar treinadores
         const trainerRes = await axios.get(`https://apipet.com.br/trainer`);
         setTrainers(trainerRes.data);
 
-        // Buscar dados do client logado
         const userData = await AsyncStorage.getItem('userData');
         if (!userData) throw new Error('Usuário não autenticado');
 
@@ -76,31 +74,40 @@ const Home = () => {
           {loading ? (
             <ActivityIndicator size="large" color="#00BFFF" />
           ) : trainers.length > 0 ? (
-            trainers.map((trainer) => (
-              <TouchableOpacity key={trainer.id} style={styles.card} onPress={() => { }}>
-                <Image source={require('../../../assets/perfil.png')} style={styles.cardImage} />
-                <Link href="/page/PerfilAdestrador" style={styles.cardLink}>
-                  <View style={styles.cardContent}>
-                    <View style={styles.cardHeader}>
-                      <Text style={styles.cardName}>{trainer.username || 'Nome não disponível'}</Text>
+            trainers.map((trainer) => {
+              console.log(`${trainer.username} - Premium:`, trainer.isPremium); // 👈 log para depuração
+
+              return (
+                <View key={trainer.id} style={styles.cardContainer}>
+                  <TouchableOpacity style={styles.card} onPress={() => { }}>
+                    {(trainer.isPremium === true || trainer.isPremium === 'true') && (
                       <View style={styles.premiumTag}>
+                        <View style={styles.premiumDot} />
                         <Text style={styles.premiumText}>Premium</Text>
                       </View>
-                    </View>
-                    <View style={styles.ratingRow}>
-                      {renderHearts(trainer.rating)}
-                    </View>
-                    <Text style={styles.cardDetails} numberOfLines={2} ellipsizeMode="tail">
-                      <Ionicons name="location" size={14} color="gray" /> {`${trainer.address}`}
-                    </Text>
-                    <Text style={styles.cardPrice}>
-                      <Ionicons name="cash-outline" size={14} color="green" /> R${trainer.hourly_rate}/hora
-                    </Text>
-                    <Text style={styles.cardMember}>Membro do app desde Fev/23</Text>
-                  </View>
-                </Link>
-              </TouchableOpacity>
-            ))
+                    )}
+                    <Image source={require('../../../assets/perfil.png')} style={styles.cardImage} />
+                    <Link href="/page/PerfilAdestrador" style={styles.cardLink}>
+                      <View style={styles.cardContent}>
+                        <View style={styles.cardHeader}>
+                          <Text style={styles.cardName}>{trainer.username || 'Nome não disponível'}</Text>
+                        </View>
+                        <View style={styles.ratingRow}>
+                          {renderHearts(trainer.rating || 0)}
+                        </View>
+                        <Text style={styles.cardDetails} numberOfLines={2} ellipsizeMode="tail">
+                          <Ionicons name="location" size={14} color="gray" /> {`${trainer.address || 'Endereço não disponível'}`}
+                        </Text>
+                        <Text style={styles.cardPrice}>
+                          <Ionicons name="cash-outline" size={14} color="green" /> R${trainer.hourly_rate || '00'}/hora
+                        </Text>
+                        <Text style={styles.cardMember}>Membro do app desde {trainer.member_since || 'Fev/23'}</Text>
+                      </View>
+                    </Link>
+                  </TouchableOpacity>
+                </View>
+              );
+            })
           ) : (
             <Text>Nenhum treinador encontrado.</Text>
           )}
@@ -147,7 +154,12 @@ const Home = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: 'white' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20 },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20
+  },
   address: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -159,14 +171,78 @@ const styles = StyleSheet.create({
   icons: { flexDirection: 'row' },
   icon: { marginLeft: 15 },
   section: { marginVertical: 10, paddingHorizontal: 20 },
-  sectionTitle: { color: '#6459D0', fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
+  sectionTitle: {
+    color: '#6459D0',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10
+  },
   highlightText: { color: '#00BFFF' },
-  promotionImage: { width: '100%', height: 200, borderRadius: 10 },
-  card: { flexDirection: 'row', backgroundColor: 'white', padding: 15, marginBottom: 10, borderRadius: 20, elevation: 2 },
-  cardImage: { width: 60, height: 60, borderRadius: 30, borderColor: '#FFA500', borderWidth: 2 },
-  premiumTag: { backgroundColor: '#00BFFF', borderRadius: 15, paddingVertical: 2, paddingHorizontal: 8, position: 'absolute', right: -100, top: -10, elevation: 3 },
-  premiumText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
-  ratingRow: { flexDirection: 'row', marginVertical: 5 },
+  promotionImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 10
+  },
+  cardContainer: {
+    marginBottom: 10,
+  },
+  card: {
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 20,
+    elevation: 2,
+    position: 'relative',
+  },
+  cardImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderColor: '#FFA500',
+    borderWidth: 2
+  },
+  cardContent: {
+    marginLeft: 10,
+    flex: 1
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  cardName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333'
+  },
+  premiumTag: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: '#D1FAE5',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    zIndex: 10,
+  },
+  premiumDot: {
+    width: 6,
+    height: 6,
+    backgroundColor: '#10B981',
+    borderRadius: 3,
+    marginRight: 5,
+  },
+  premiumText: {
+    color: '#065F46',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    marginVertical: 5
+  },
   cardDetails: {
     fontSize: 14,
     color: 'gray',
@@ -175,13 +251,39 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     maxWidth: 250
   },
-  cardPrice: { fontSize: 14, color: '#0d47a1', fontWeight: 'bold', marginTop: 5 },
-  cardMember: { fontSize: 12, color: 'gray', marginTop: 5 },
-  navigation: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 10, borderTopWidth: 1, borderTopColor: '#e0e0e0', backgroundColor: 'white' },
-  navItem: { alignItems: 'center' },
-  navLink: { alignItems: 'center' },
-  navContent: { alignItems: 'center' },
-  navText: { fontSize: 12, color: 'black', marginTop: 5 }
+  cardPrice: {
+    fontSize: 14,
+    color: '#0d47a1',
+    fontWeight: 'bold',
+    marginTop: 5
+  },
+  cardMember: {
+    fontSize: 12,
+    color: 'gray',
+    marginTop: 5
+  },
+  navigation: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+    backgroundColor: 'white'
+  },
+  navItem: {
+    alignItems: 'center'
+  },
+  navLink: {
+    alignItems: 'center'
+  },
+  navContent: {
+    alignItems: 'center'
+  },
+  navText: {
+    fontSize: 12,
+    color: 'black',
+    marginTop: 5
+  }
 });
 
 export default Home;

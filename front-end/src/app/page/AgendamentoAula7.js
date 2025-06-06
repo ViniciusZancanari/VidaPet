@@ -6,11 +6,12 @@ import axios from 'axios';
 
 const AgendamentoAula7 = () => {
   const router = useRouter();
-  const { trainer_id, selectedDate, selectedTime, meetingAddress } = useLocalSearchParams();
+  // 1. CORRIGIR o nome do parâmetro de 'meetingAddress' para 'address' para corresponder ao que é enviado
+  //    Também recebemos 'metodoPagamento' que pode ser útil no futuro.
+  const { trainer_id, selectedDate, selectedTime, address, metodoPagamento } = useLocalSearchParams();
   const [trainer, setTrainer] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Define o valor fixo do serviço
   const fixedServiceValue = 50;
 
   const formatDate = (dateString) => {
@@ -47,7 +48,7 @@ const AgendamentoAula7 = () => {
 
   const handleAlterarDados = () => {
     router.push({
-      pathname: '/page/AgendamentoAula5', // Ou a tela anterior correta para edição
+      pathname: '/page/AgendamentoAula4', // Ou a tela anterior correta para edição
       params: {
         trainer_id: trainer_id,
         selectedDate,
@@ -63,8 +64,10 @@ const AgendamentoAula7 = () => {
         trainer_id: trainer_id.toString(),
         selectedDate,
         selectedTime,
-        meetingAddress,
-        serviceValue: fixedServiceValue // MODIFICADO: Passar o valor fixo do serviço
+        // 3. PASSAR a variável 'address' corretamente para a próxima tela
+        meetingAddress: address, 
+        serviceValue: fixedServiceValue,
+        metodoPagamento: metodoPagamento, // Passando o método de pagamento adiante
       }
     });
   };
@@ -111,8 +114,9 @@ const AgendamentoAula7 = () => {
         <Image source={require('../../../assets/local.png')} />
         <View style={styles.line}>
           <Text style={styles.subtitle}>Local do Encontro:</Text>
+          {/* 2. USAR a variável 'address' para exibir o local */}
           <Text style={styles.instructions}>
-            {meetingAddress || 'Endereço não especificado'}
+            {address || 'Endereço não especificado'}
           </Text>
         </View>
 
@@ -120,7 +124,6 @@ const AgendamentoAula7 = () => {
           <Image source={require('../../../assets/valorTrainner.png')} />
           <Text style={styles.subtitle}>Valor do serviço:</Text>
           <Text style={styles.instructions}>
-            {/* MODIFICADO: Exibir o valor fixo do serviço */}
             R$ {fixedServiceValue.toFixed(2).replace('.', ',')}
           </Text>
         </View>

@@ -17,6 +17,8 @@ const AgendamentoAula9 = () => {
   const PIX_CODE = "00020126360014BR.GOV.BCB.PIX0114+5561987654321520400005303986540410.005802BR5913Fulano de Tal6008BRASILIA62070503***6304A3A2";
 
   useEffect(() => {
+    console.log("Dados recebidos em AgendamentoAula9:", params);
+
     const fetchClientId = async () => {
       try {
         const userData = await AsyncStorage.getItem('userData');
@@ -30,11 +32,11 @@ const AgendamentoAula9 = () => {
     };
 
     fetchClientId();
-  }, []);
+  }, [params]);
 
   useEffect(() => {
     const intervalId = setInterval(() => {
-      setCountdown(prev => prev - 1);
+      setCountdown(prev => prev > 0 ? prev - 1 : 0);
     }, 1000);
 
     return () => clearInterval(intervalId);
@@ -49,8 +51,8 @@ const AgendamentoAula9 = () => {
     try {
       setIsLoading(true);
       
-      if (!clientId || !params.trainer_id || !params.selectedDate || !params.selectedTime || !params.meetingAddress) {
-        throw new Error('Missing required fields');
+      if (!clientId || !params.trainer_id || !params.selectedDate || !params.selectedTime || !params.meetingAddress || !params.metodoPagamento) {
+        throw new Error('Faltando campos obrigatórios para criar o agendamento');
       }
 
       const formattedTime = params.selectedTime.includes(':') ? params.selectedTime : `${params.selectedTime}:00`;
@@ -59,13 +61,16 @@ const AgendamentoAula9 = () => {
       const payload = {
         client_id: clientId,
         trainer_id: params.trainer_id,
-        type_payment: "CARD",
+        // type_payment: "CARD",
+        type_payment: params.metodoPagamento.toUpperCase(),
         address: params.meetingAddress,
         hourClass: formattedTime,
         availableDate: isoDate,
         total_price: params.serviceValue ? Number(params.serviceValue) : 50,
         status: "PENDING"
       };
+
+      console.log("Enviando payload para a API:", payload);
 
       const response = await axios.post(
         'https://apipet.com.br/trainingService', 

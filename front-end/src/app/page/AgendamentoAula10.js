@@ -1,12 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Link } from 'expo-router';
+// 1. Importar o hook para receber parâmetros
+import { Link, useLocalSearchParams } from 'expo-router';
 
 const AgendamentoAula10 = () => {
+  // 2. Receber os dados do agendamento da tela anterior
+  const params = useLocalSearchParams();
+
+  useEffect(() => {
+    // Log para confirmar que os dados do agendamento final chegaram
+    console.log("Dados recebidos na tela de sucesso (AgendamentoAula10):", params);
+  }, [params]);
+
   return (
     <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
-      {/* X no canto superior para voltar à página PerfilAdestrador */}
       <View style={styles.header}>
         <Link href="/page/Home">
           <Text style={styles.closeButtonText}>X</Text>
@@ -27,20 +35,44 @@ const AgendamentoAula10 = () => {
         Enviaremos um e-mail para você assim que o profissional escolhido confirmar o(s) agendamento(s). Obrigado!
       </Text>
 
+      {/* 3. TORNAR O LINK DO CHAT DINÂMICO */}
       <TouchableOpacity style={styles.chatButton}>
-        <Link style={styles.buttonText} href="/page/Chat-Conversa">
+        <Link 
+          style={styles.buttonText} 
+          href={{
+            pathname: "/page/Chat-Conversa",
+            // Envia o ID do adestrador para abrir a conversa correta
+            params: { trainerId: params.trainer_id } 
+          }}
+        >
           Chat - Tire dúvidas com o adestrador
         </Link>
       </TouchableOpacity>
 
       <View style={styles.buttons}>
+        {/* 4. (OPCIONAL) Manter o contexto de dados no botão Voltar */}
         <TouchableOpacity style={styles.voltarButton}>
-          <Link style={styles.buttonText} href="/page/AgendamentoAula9">
+          <Link 
+            style={styles.buttonText} 
+            href={{
+              pathname: "/page/AgendamentoAula9",
+              // Devolve todos os parâmetros caso o usuário volte
+              params: params 
+            }}
+          >
             Voltar
           </Link>
         </TouchableOpacity>
+
+        {/* 5. TORNAR O LINK DO PERFIL DINÂMICO */}
         <TouchableOpacity style={styles.pefilButton}>
-          <Link href="/page/PerfilAdestrador">
+          <Link 
+            href={{
+              pathname: "/page/PerfilAdestrador",
+              // Envia o ID para carregar o perfil do adestrador correto
+              params: { trainer_id: params.trainer_id }
+            }}
+          >
             Perfil do adestrador
           </Link>
         </TouchableOpacity>
@@ -132,8 +164,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   grafismo: {
-    width: 100, // Adjust the width as needed
-    height: 100, // Adjust the height as needed
+    width: 100,
+    height: 100,
     position: 'absolute',
     top: 70,
     left: 0,

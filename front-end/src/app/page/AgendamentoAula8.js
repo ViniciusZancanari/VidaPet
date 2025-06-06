@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react'; // Adicionado useEffect para log
 import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link, useRouter, useLocalSearchParams } from 'expo-router';
@@ -7,21 +7,22 @@ const AgendamentoAula8 = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
 
+  // Log para verificar todos os parâmetros recebidos
+  useEffect(() => {
+    console.log("Dados recebidos em AgendamentoAula8:", params);
+  }, [params]);
+
   const handleContinue = () => {
-    if (!params.trainer_id || !params.selectedDate || !params.selectedTime || !params.meetingAddress) {
-      Alert.alert('Erro', 'Informações faltando. Por favor, volte e tente novamente.');
+    // 1. Verificação um pouco mais robusta, incluindo os novos parâmetros
+    if (!params.trainer_id || !params.selectedDate || !params.selectedTime || !params.meetingAddress || !params.metodoPagamento) {
+      Alert.alert('Erro', 'Informações do agendamento estão faltando. Por favor, volte e tente novamente.');
       return;
     }
 
+    // 2. Repassar TODOS os parâmetros recebidos para a próxima tela
     router.push({
       pathname: '/page/AgendamentoAula9',
-      params: {
-        trainer_id: params.trainer_id,
-        selectedDate: params.selectedDate,
-        selectedTime: params.selectedTime,
-        meetingAddress: params.meetingAddress,
-        serviceValue: params.serviceValue
-      }
+      params: params // Envia o objeto de parâmetros inteiro, que já contém tudo o que precisamos
     });
   };
 

@@ -14,9 +14,11 @@ const Perfil = () => {
     const fetchUserData = async () => {
       try {
         const userData = await AsyncStorage.getItem('userData');
-        const user = JSON.parse(userData);
-        const response = await axios.get(`https://apipet.com.br/client/${user.id}`);
-        setUser(response.data);
+        if (userData) {
+            const user = JSON.parse(userData);
+            const response = await axios.get(`https://apipet.com.br/client/${user.id}`);
+            setUser(response.data);
+        }
       } catch (error) {
         console.error('Erro ao buscar os dados do usuário:', error);
       }
@@ -153,15 +155,20 @@ const styles = StyleSheet.create({
     left: 20,
     padding: 10,
   },
+  userInfo: {
+    alignItems: 'center',
+  },
   headerText: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#315381',
     textAlign: 'center',
+    marginTop: 8, 
   },
   profileImageContainer: {
     borderRadius: 25,
     overflow: 'hidden',
+    // As propriedades borderWidth e borderColor foram removidas daqui
   },
   profileImage: {
     width: 50,

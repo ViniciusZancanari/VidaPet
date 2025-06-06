@@ -1,12 +1,58 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Link } from 'expo-router';
+import { Link, useRouter, useLocalSearchParams } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AgendamentoAula6 = () => {
+  const [address, setAddress] = useState('Carregando endereço...');
+  const [metodoPagamentoSelecionado, setMetodoPagamentoSelecionado] = useState(null);
+  const router = useRouter();
+  const { trainer_id, selectedDate, selectedTime } = useLocalSearchParams();
+
+  useEffect(() => {
+    const loadAddress = async () => {
+      try {
+        const savedAddress = await AsyncStorage.getItem('selectedAddress');
+        if (savedAddress !== null) {
+          setAddress(savedAddress);
+        } else {
+          setAddress('Endereço não encontrado.');
+        }
+      } catch (error) {
+        console.error('Erro ao recuperar o endereço:', error);
+        setAddress('Erro ao carregar o endereço.');
+      }
+    };
+    loadAddress();
+  }, []);
+
+  const handleAvancar = () => {
+    const bookingDetails = {
+      trainer_id,
+      selectedDate,
+      selectedTime,
+      address,
+      metodoPagamento: metodoPagamentoSelecionado,
+    };
+
+    if (metodoPagamentoSelecionado === 'cartao') {
+      router.push({
+        pathname: '/page/FormaDePagamento',
+        params: bookingDetails,
+      });
+    } else if (metodoPagamentoSelecionado === 'pix') {
+      router.push({
+        pathname: '/page/AgendamentoAula7',
+        params: bookingDetails,
+      });
+    } else {
+      Alert.alert('Seleção Necessária', 'Por favor, selecione uma forma de pagamento para continuar.');
+    }
+  };
+
   return (
     <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
-      {/* X no canto superior para voltar à página PerfilAdestrador */}
       <View style={styles.header}>
         <Link href="/page/Home">
           <Text style={styles.closeButtonText}>X</Text>
@@ -14,40 +60,61 @@ const AgendamentoAula6 = () => {
       </View>
 
       <Text style={styles.title}>Pagamento pelo aplicativo:</Text>
-      
-      <TouchableOpacity style={styles.cartaoButton}>
-        <View style={styles.iconButton1}>
-          <Image source={require('../../../assets/cartaoCredito.png')} />
-          <Link
-            style={styles.cartaoButtonText}
-            href="/page/AgendamentoAula11">Cartão de Crédio
-          </Link>
-        </View>
+
+      <TouchableOpacity 
+        style={[
+          styles.paymentButton, 
+          metodoPagamentoSelecionado === 'cartao' && styles.selectedButton
+        ]}
+        onPress={() => setMetodoPagamentoSelecionado('cartao')}
+      >
+        <Image source={require('../../../assets/cartaoCredito.png')} />
+        <Text style={[
+          styles.paymentButtonText,
+          metodoPagamentoSelecionado === 'cartao' && styles.selectedText
+        ]}>
+          Cartão de Crédito
+        </Text>
       </TouchableOpacity>
       
-      <TouchableOpacity style={styles.pixButton}>
-        <View style={styles.iconButton2}>
-          <Image source={require('../../../assets/pix2.png')} />
-          <Link
-            style={styles.cartaoButtonText}
-            href="/page/AgendamentoAula7">Pix
-          </Link>
-        </View>
+      <TouchableOpacity 
+        style={[
+          styles.paymentButton, 
+          metodoPagamentoSelecionado === 'pix' && styles.selectedButton
+        ]}
+        onPress={() => setMetodoPagamentoSelecionado('pix')}
+      >
+        <Image source={require('../../../assets/pix2.png')} />
+        <Text style={[
+          styles.paymentButtonText,
+          metodoPagamentoSelecionado === 'pix' && styles.selectedText
+        ]}>
+          Pix
+        </Text>
       </TouchableOpacity>
       
       <View style={styles.buttons}>
         <TouchableOpacity style={styles.voltarButton}>
           <Link
             style={styles.buttonText}
-            href="/page/AgendamentoAula5">Voltar
+            href={{
+                pathname: "/page/Endereco1-1",
+                params: { trainer_id, selectedDate, selectedTime }
+            }}
+          >
+            Voltar
           </Link>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.avancarButton}>
-          <Link
-            style={styles.buttonText}
-            href="/page/AgendamentoAula7">Avançar
-          </Link>
+        <TouchableOpacity 
+          style={[
+            styles.avancarButton,
+            !metodoPagamentoSelecionado && styles.avancarButtonDisabled
+          ]} 
+          onPress={handleAvancar}
+          disabled={!metodoPagamentoSelecionado}
+        >
+          <Text style={styles.buttonText}>Avançar</Text>
         </TouchableOpacity>
       </View>
     </LinearGradient>
@@ -78,56 +145,46 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     color: '#FFF',
     textAlign: 'center',
-    marginBottom: 50,
   },
-  iconButton1: {
+  paymentButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 50,
+    width: '90%',
     paddingVertical: 20,
-    paddingHorizontal: 60,
     borderRadius: 30,
     backgroundColor: 'transparent',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#fff',
-    marginBottom: 50,
-    color: '#FFF',
+    marginBottom: 20,
   },
-  iconButton2: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 50,
-    paddingVertical: 20,
-    paddingHorizontal: 110,
-    borderRadius: 30,
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#FFCB05',
-    marginBottom: 50,
-    color: '#FFCB05',
-  },
-  cartaoButtonText: {
+  paymentButtonText: {
     color: '#fff',
     fontSize: 16,
     marginLeft: 14,
+    fontWeight: 'bold',
+  },
+  selectedButton: {
+    backgroundColor: '#FFCB05',
+    borderColor: '#FFCB05',
+  },
+  selectedText: {
+    color: '#191970',
   },
   buttons: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 50,
+    marginTop: 30,
   },
   voltarButton: {
     marginRight: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 30,
+    paddingVertical: 10,
+    paddingHorizontal: 40,
     borderRadius: 30,
     backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: '#fff',
-    marginBottom: 50,
     color: '#FFF',
   },
   avancarButton: {
@@ -135,21 +192,17 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 50,
     borderRadius: 30,
-    marginBottom: 50,
     borderWidth: 3,
-    borderStyle: 'solid',
     borderColor: '#faac0f',
+  },
+  avancarButtonDisabled: {
+    backgroundColor: '#a9a9a9',
+    borderColor: '#696969',
   },
   buttonText: {
     color: '#fff',
     fontSize: 16,
-  },
-  grafismo: {
-    width: 100, // Adjust the width as needed
-    height: 100, // Adjust the height as needed
-    position: 'absolute',
-    top: 70,
-    left: 0,
+    fontWeight: 'bold',
   },
 });
 

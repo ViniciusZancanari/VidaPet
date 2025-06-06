@@ -1,20 +1,27 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Link } from 'expo-router';
+import Icon from 'react-native-vector-icons/Ionicons';
+import { useRouter } from 'expo-router';
+
+
 
 const FormasDePagamento = () => {
 
+    const router = useRouter();
+
+
     return (
         <View style={styles.container}>
+            {/* 1. JSX do Header simplificado para 3 elementos */}
             <View style={styles.header}>
-                <TouchableOpacity style={styles.backButton}>
-                    <Link
-                        style={styles.backButtonText}
-                        href="/page/Perfil">{'<'}
-                    </Link>
+                <TouchableOpacity style={styles.backButton} onPress={() => router.push('/page/Perfil')}>
+                    <Icon name="arrow-back" size={24} color="#ff1744" />
                 </TouchableOpacity>
-                <View style={styles.headerSpacer} />
+
                 <Text style={styles.headerText}>FORMAS DE PAGAMENTO</Text>
+
+                {/* Espaçador para garantir que o título fique centralizado */}
                 <View style={styles.headerSpacer} />
             </View>
 
@@ -60,10 +67,8 @@ const FormasDePagamento = () => {
                 <Link
                     style={styles.buttonText}
                     href={'/page/AgendamentoAula11'}
-                    >Adicionar Cartão
+                >Adicionar Cartão
                 </Link>
-
-
             </TouchableOpacity>
         </View>
     );
@@ -76,32 +81,34 @@ const styles = StyleSheet.create({
     },
     header: {
         flexDirection: 'row',
-        alignItems: 'center',
+        alignItems: 'center', // Alinha todos os itens na vertical
         marginBottom: 20,
-        padding: 20,
+        paddingVertical: 10, // Usamos padding vertical
+        paddingHorizontal: 20, // e horizontal
         borderBottomWidth: 2,
         borderBottomColor: '#ccc',
-        justifyContent: 'center',
+        // 2. MUDANÇA: Usamos 'space-between' para o alinhamento
+        justifyContent: 'space-between',
     },
     backButton: {
-        position: 'absolute',
-        left: 20,
+        // 3. MUDANÇA: Removemos 'position: absolute'
         padding: 10,
     },
     backButtonText: {
-        fontSize: 20,
+        fontSize: 24, // Aumentado para melhor visualização e área de toque
+        fontWeight: 'bold',
         color: '#EF5C43',
     },
+    // 4. MUDANÇA: O espaçador agora tem uma largura fixa para balancear o layout
     headerSpacer: {
-        flex: 1,
+        width: 44, // Largura aproximada do backButton (ícone + padding)
     },
     headerText: {
-        fontSize: 20,
+        fontSize: 18, // Ajustado para melhor caber entre os botões
         fontWeight: 'bold',
         color: '#315381',
         textAlign: 'center',
     },
-
     cartoes: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -121,7 +128,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
         color: '#888'
-
     },
     button: {
         backgroundColor: '#191970',
@@ -149,7 +155,6 @@ const styles = StyleSheet.create({
         width: 20,
         height: 20,
     },
-
 });
 
 export default FormasDePagamento;

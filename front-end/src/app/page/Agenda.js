@@ -1,81 +1,68 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import { Link } from 'expo-router';
+import { useRouter, Link, useFocusEffect } from 'expo-router'; 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 
 const Agenda = () => {
-    const navigation = useNavigation();
-    const [selectedDate, setSelectedDate] = useState('');
+    const router = useRouter();
     const [classes, setClasses] = useState([]);
-    const [markedDates, setMarkedDates] = useState({});
     const [isLoading, setIsLoading] = useState(true);
-    const [totalClasses, setTotalClasses] = useState(0);
     const [clientId, setClientId] = useState(null);
+    const [markedDates, setMarkedDates] = useState({});
+    const [totalClasses, setTotalClasses] = useState(0);
+    const [selectedDate, setSelectedDate] = useState('');
 
-    useEffect(() => {
-        const fetchClasses = async () => {
-            setIsLoading(true);
-            try {
-                const userData = await AsyncStorage.getItem('userData');
-                const parsedUser = JSON.parse(userData);
-                const id = parsedUser?.id;
+    const fetchClasses = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const userData = await AsyncStorage.getItem('userData');
+            if (!userData) throw new Error('Dados do usuário não encontrados.');
+            
+            const parsedUser = JSON.parse(userData);
+            const id = parsedUser?.id;
+            if (!id) throw new Error('ID do cliente não encontrado.');
+            
+            setClientId(id);
 
-                if (!id) {
-                    console.error('ID do cliente não encontrado.');
-                    setIsLoading(false);
-                    return;
-                }
+            const response = await axios.get('https://apipet.com.br/trainingService/');
+            
+            const clientClasses = response.data.filter(item => item.client_id === id && item.status !== 'CANCELLED');
+            setClasses(clientClasses);
+            setTotalClasses(clientClasses.length);
 
-                setClientId(id);
+            const dates = {};
+            clientClasses.forEach((item) => {
+                const date = item.availableDate.split('T')[0];
+                dates[date] = { marked: true, dotColor: '#4A55B1' };
+            });
+            setMarkedDates(dates);
 
-                const response = await fetch('https://apipet.com.br/trainingService/');
-                if (!response.ok) {
-                    throw new Error(`HTTP Error! Status: ${response.status}`);
-                }
-                const data = await response.json();
-                setClasses(data);
-
-                const clientClasses = data.filter(item => item.client_id === id);
-                setTotalClasses(clientClasses.length);
-
-                // Marca os dias com agendamentos
-                const dates = {};
-                clientClasses.forEach((item) => {
-                    const date = item.availableDate.split('T')[0];
-                    dates[date] = {
-                        marked: true,
-                        dotColor: '#4A55B1',
-                        selected: false,
-                    };
-                });
-                setMarkedDates(dates);
-
-            } catch (error) {
-                console.error('Error fetching classes:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchClasses();
+        } catch (error) {
+            console.error('Error fetching classes:', error);
+            // Alert.alert('Erro', 'Não foi possível carregar seus agendamentos.');
+        } finally {
+            setIsLoading(false);
+        }
     }, []);
 
+    useFocusEffect(
+        useCallback(() => {
+            fetchClasses();
+        }, [fetchClasses])
+    );
+
     const handleDayPress = (day) => {
-        // Atualiza apenas o dia selecionado sem apagar os marcados
         const updatedMarkedDates = { ...markedDates };
 
-        // Primeiro, remove qualquer seleção anterior
-        Object.keys(updatedMarkedDates).forEach(date => {
-            updatedMarkedDates[date] = {
-                ...updatedMarkedDates[date],
-                selected: false,
-            };
+        Object.keys(markedDates).forEach(date => {
+            if (updatedMarkedDates[date]) {
+              updatedMarkedDates[date].selected = false;
+            }
         });
-
-        // Se o dia clicado já tinha marcação, mantém a bolinha e marca como selecionado
+    
         if (updatedMarkedDates[day.dateString]) {
             updatedMarkedDates[day.dateString] = {
                 ...updatedMarkedDates[day.dateString],
@@ -83,13 +70,12 @@ const Agenda = () => {
                 selectedColor: '#4A55B1',
             };
         } else {
-            // Se não tinha marcação, só marca como selecionado normal
             updatedMarkedDates[day.dateString] = {
                 selected: true,
                 selectedColor: '#4A55B1',
             };
         }
-
+    
         setMarkedDates(updatedMarkedDates);
         setSelectedDate(day.dateString);
     };
@@ -97,17 +83,15 @@ const Agenda = () => {
     return (
         <ScrollView style={styles.container}>
             <View style={styles.header}>
-                <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-                    <Link href="/page/Home">
+                <TouchableOpacity style={styles.backButton} onPress={() => router.push('/page/Home')}>
                     <Ionicons name="arrow-back" size={24} color="#EF5C43" />
-                    </Link>
                 </TouchableOpacity>
                 <Text style={styles.headerText}>AGENDA</Text>
             </View>
 
             <Text style={styles.subtitle}>
                 <Text style={styles.subtitleText}>Você tem </Text>
-                <Text style={styles.highlightedText}>{totalClasses} aulas agendadas neste mês</Text>
+                <Text style={styles.highlightedText}>{totalClasses} aulas agendadas</Text>
             </Text>
 
             <View style={styles.calendarContainer}>
@@ -126,37 +110,49 @@ const Agenda = () => {
             {isLoading ? (
                 <Text style={styles.loadingText}>Carregando aulas...</Text>
             ) : classes.length > 0 ? (
-                classes
-                    .filter(classItem => classItem.client_id === clientId)
-                    .map((classItem) => (
-                        <View key={classItem.id} style={styles.classesContainer}>
-                            <Text style={styles.dateText}>
-                                {new Date(classItem.availableDate).toLocaleDateString('pt-BR')}
-                            </Text>
+                classes.map((classItem) => (
+                    <View key={classItem.id} style={styles.classesContainer}>
+                        <Text style={styles.dateText}>
+                            {new Date(classItem.availableDate).toLocaleDateString('pt-BR')}
+                        </Text>
+                        <Text style={styles.classInfo}>Horário: {classItem.hourClass}</Text>
+                        <Text style={styles.classInfo}>Profissional: {classItem.trainer?.username || 'Não informado'}</Text>
+                        <Text style={styles.classInfo}>Serviço: Adestramento de cachorro</Text>
+                        <Text style={styles.classInfo}>Valor: R${classItem.total_price}</Text>
+                        <Text style={styles.classInfo}>Local: {classItem.address}</Text>
 
-                            <Text style={styles.classInfo}>Horário: {classItem.hourClass}</Text>
-                            <Text style={styles.classInfo}>Profissional: {classItem.trainer.username}</Text>
-                            <Text style={styles.classInfo}>Serviço: Adestramento de cachorro</Text>
-                            <Text style={styles.classInfo}>Valor: R${classItem.total_price}</Text>
-                            <Text style={styles.classInfo}>Local: {classItem.address}</Text>
-
-                            <View style={styles.buttonGroup}>
-                                <TouchableOpacity style={styles.actionButton}>
-                                    <Text style={styles.actionButtonText}>Chat</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={styles.actionButton}>
-                                    <Link href="/page/Reagendar" style={styles.actionButtonText}>
-                                        Reagendar
-                                    </Link>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={styles.actionButton}>
-                                    <Link href="/page/Termo_Cancelamento" style={styles.actionButtonText}>
-                                        Cancelar aula
-                                    </Link>
-                                </TouchableOpacity>
-                            </View>
+                        <View style={styles.buttonGroup}>
+                            <TouchableOpacity style={styles.actionButton}>
+                                <Text style={styles.actionButtonText}>Chat</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.actionButton}>
+                                <Link 
+                                    href={{
+                                        pathname: "/page/Reagendar",
+                                        params: { 
+                                            trainer_id: classItem.trainer_id,
+                                            training_service_id: classItem.id 
+                                        }
+                                    }} 
+                                    style={styles.actionButtonText}
+                                >
+                                    Reagendar
+                                </Link>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.cancelButton}>
+                                <Link 
+                                    href={{
+                                        pathname: "/page/Termo_Cancelamento",
+                                        params: { training_service_id: classItem.id }
+                                    }}
+                                    style={styles.actionButtonText}
+                                >
+                                    Cancelar aula
+                                </Link>
+                            </TouchableOpacity>
                         </View>
-                    ))
+                    </View>
+                ))
             ) : (
                 <Text style={styles.noDataText}>Nenhuma aula encontrada.</Text>
             )}
@@ -185,10 +181,12 @@ const styles = StyleSheet.create({
         color: '#315381',
         textAlign: 'center',
         flex: 1,
+        marginRight: 44, 
     },
     subtitle: {
         fontSize: 16,
         marginBottom: 20,
+        textAlign: 'center',
     },
     subtitleText: {
         color: '#333',
@@ -201,8 +199,9 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         borderRadius: 10,
         overflow: 'hidden',
-        backgroundColor: '#EFEFEF',
+        backgroundColor: '#F7F7F7',
         padding: 10,
+        elevation: 2,
     },
     classesContainer: {
         backgroundColor: 'white',
@@ -229,7 +228,10 @@ const styles = StyleSheet.create({
     buttonGroup: {
         flexDirection: 'row',
         justifyContent: 'space-around',
-        marginTop: 10,
+        marginTop: 15,
+        borderTopWidth: 1,
+        borderTopColor: '#eee',
+        paddingTop: 15,
     },
     actionButton: {
         flex: 1,
@@ -238,7 +240,18 @@ const styles = StyleSheet.create({
         borderColor: '#FAA511',
         borderWidth: 1,
         borderRadius: 20,
-        paddingVertical: 8,
+        paddingVertical: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    cancelButton: {
+        flex: 1,
+        marginHorizontal: 5,
+        backgroundColor: '#D32F2F', 
+        borderColor: '#B71C1C',
+        borderWidth: 1,
+        borderRadius: 20,
+        paddingVertical: 10,
         alignItems: 'center',
         justifyContent: 'center',
     },

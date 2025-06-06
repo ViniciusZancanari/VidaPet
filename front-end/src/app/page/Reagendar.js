@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Calendar } from 'react-native-calendars';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import Constants from 'expo-constants';
 import axios from 'axios';
-import { Link } from 'expo-router';
-
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Importar o AsyncStorage
 
 const Reagendar = () => {
     const [selectedDate, setSelectedDate] = useState('');
     const [selectedTime, setSelectedTime] = useState('');
     const [trainer, setTrainer] = useState(null);
-    const ip = Constants.manifest2?.extra?.localhost || '192.168.0.6';
+    const [isLoading, setIsLoading] = useState(false);
+    const router = useRouter();
+    const { trainer_id, training_service_id } = useLocalSearchParams();
 
     const handleDayPress = (day) => {
         setSelectedDate(day.dateString);
@@ -22,105 +22,140 @@ const Reagendar = () => {
         setSelectedTime(time);
     };
 
-    const handleConfirm = () => {
-        if (!selectedTime) {
-            Alert.alert('Erro', 'Por favor, selecione um horário antes de continuar.');
+    const handleConfirmReschedule = async () => {
+        if (!selectedDate || !selectedTime) {
+            Alert.alert('Seleção necessária', 'Por favor, selecione uma nova data e um novo horário.');
             return;
         }
 
-        const postData = {
-            client_id: "0804fac1-880f-4394-b818-368580659f43",
-            trainer_id: "6194a177-923d-4c03-8504-2ef51df5992e",
-            total_price: 50,
-            address: "Av Jose Cunha , 382",
-            availableDate: `${selectedDate}T${selectedTime}:00.000Z`,
-            type_payment: "CARD",
-            hourClass: selectedTime,
-        };
+        setIsLoading(true);
 
-        // Aqui envia para o backend (descomente quando configurar o backend)
-        /*
-        axios.post(`http://${ip}:3000/trainingService`, postData)
-            .then(response => {
-                Alert.alert('Sucesso', 'Horário agendado com sucesso!');
-            })
-            .catch(error => {
-                Alert.alert('Erro', 'Ocorreu um erro ao agendar o horário.');
-            });
-        */
+        try {
+            // 1. BUSCAR O TOKEN DE AUTENTICAÇÃO DO ASYNCSTORAGE
+            const userDataString = await AsyncStorage.getItem('userData');
+            if (!userDataString) {
+                // Se não encontrar dados do usuário, não prossegue
+                throw new Error('Dados de autenticação não encontrados. Faça login novamente.');
+            }
+            
+            const userData = JSON.parse(userDataString);
+            const token = userData?.token; // Assumindo que o token está salvo como 'token'
+
+            if (!token) {
+                // Se não encontrar o token, não prossegue
+                throw new Error('Token de autenticação inválido. Faça login novamente.');
+            }
+
+            // Prepara o payload (corpo da requisição)
+            const newIsoDate = `${selectedDate}T${selectedTime}:00.000Z`;
+            const payload = {
+                newAvailableDate: newIsoDate,
+                newHourClass: selectedTime,
+            };
+
+            console.log(`Enviando PUT para /trainingService/reschedule/${training_service_id}`);
+            console.log("Payload:", payload);
+
+            // 2. FAZER A REQUISIÇÃO PUT COM O TOKEN NOS HEADERS
+            const response = await axios.put(
+                `https://apipet.com.br/trainingService/reschedule/${training_service_id}`,
+                payload,
+                {
+                    headers: {
+                        // Adiciona o cabeçalho de autorização
+                        'Authorization': `Bearer ${token}` 
+                    }
+                }
+            );
+
+            if (response.status === 200) {
+                Alert.alert('Sucesso!', 'Sua aula foi reagendada.', [
+                    {
+                        text: 'OK',
+                        onPress: () => router.push('/page/Agenda'),
+                    },
+                ]);
+            }
+        } catch (error) {
+            console.error('Erro ao reagendar:', error.response?.data || error.message);
+            // Mostra a mensagem de erro que veio do 'try' ou do servidor
+            Alert.alert('Erro', error.message || 'Não foi possível reagendar a aula.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     useEffect(() => {
-        axios.get(`http://${ip}:3000/trainer/9e98e699-0fc3-4570-8a1a-027475d850b9`)
-            .then(response => setTrainer(response.data))
-            .catch(error => console.error('Erro ao buscar o treinador:', error));
-    }, [ip]);
+        if (trainer_id) {
+            axios.get(`https://apipet.com.br/trainer/${trainer_id}`)
+                .then(response => setTrainer(response.data))
+                .catch(error => console.error('Erro ao buscar o treinador:', error));
+        }
+    }, [trainer_id]);
 
     const timeSlots = [
-        '08:00', '09:00', '10:00', '11:00',
-        '12:00', '13:00', '14:00', '15:00',
-        '16:00', '17:00', '18:00', '19:00'
+        '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', 
+        '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'
     ];
 
     return (
-        <ScrollView>
-            <View style={styles.container}>
-                <View style={styles.header}>
-                    <TouchableOpacity style={styles.backButton}>
-                    <Link href="/page/Agenda" style={styles.confirmButtonText}>
-                        <Ionicons name="arrow-back" size={24} color="#EF5C43" />
-                    </Link>  
-                    </TouchableOpacity>
-                    <Text style={styles.headerText}>AGENDA</Text>
-                </View>
-
-                <Text style={styles.subtitle}>
-                    Aula com <Text style={styles.highlightedText}>{trainer ? trainer.username : 'Carregando...'}</Text>
-                </Text>
-
-                <View style={styles.calendarContainer}>
-                    <Calendar
-                        onDayPress={handleDayPress}
-                        markedDates={{
-                            [selectedDate]: { selected: true, marked: true, selectedColor: '#4A55B1' },
-                        }}
-                        theme={{
-                            selectedDayBackgroundColor: '#4A55B1',
-                            todayTextColor: '#EF5C43',
-                            arrowColor: '#4A55B1',
-                        }}
-                    />
-                </View>
-
-                <Text style={styles.timeText}>Escolha um horário:</Text>
-                <View style={styles.timeGrid}>
-                    {timeSlots.map((time) => (
-                        <TouchableOpacity
-                            key={time}
-                            style={[styles.timeButton, selectedTime === time && styles.timeButtonSelected]}
-                            onPress={() => handleTimeSelect(time)}
-                        >
-                            <Text style={[styles.timeButtonText, selectedTime === time && styles.timeButtonTextSelected]}>
-                                {time}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </View>
-
-                <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm}>
-                    <Link href="/page/Agenda" style={styles.confirmButtonText}>
-                        Confirmar
-                    </Link>
+        // O SEU CÓDIGO VISUAL (JSX) PERMANECE O MESMO
+        <ScrollView contentContainerStyle={styles.container}>
+            <View style={styles.header}>
+                <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                    <Ionicons name="arrow-back" size={24} color="#EF5C43" />
                 </TouchableOpacity>
+                <Text style={styles.headerText}>REAGENDAR AULA</Text>
             </View>
+
+            <Text style={styles.subtitle}>
+                Selecione um novo dia e horário para a aula com <Text style={styles.highlightedText}>{trainer ? trainer.username : '...'}</Text>
+            </Text>
+
+            <View style={styles.calendarContainer}>
+                <Calendar
+                    onDayPress={handleDayPress}
+                    markedDates={{ [selectedDate]: { selected: true, selectedColor: '#4A55B1' } }}
+                    theme={{
+                        selectedDayBackgroundColor: '#4A55B1',
+                        todayTextColor: '#EF5C43',
+                        arrowColor: '#4A55B1',
+                    }}
+                />
+            </View>
+
+            <Text style={styles.timeText}>Escolha um horário:</Text>
+            <View style={styles.timeGrid}>
+                {timeSlots.map((time) => (
+                    <TouchableOpacity
+                        key={time}
+                        style={[styles.timeButton, selectedTime === time && styles.timeButtonSelected]}
+                        onPress={() => handleTimeSelect(time)}
+                    >
+                        <Text style={[styles.timeButtonText, selectedTime === time && styles.timeButtonTextSelected]}>{time}</Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+
+            <TouchableOpacity 
+                style={[styles.confirmButton, isLoading && styles.confirmButtonDisabled]} 
+                onPress={handleConfirmReschedule}
+                disabled={isLoading}
+            >
+                <Text style={styles.confirmButtonText}>
+                    {isLoading ? 'Reagendando...' : 'Confirmar Reagendamento'}
+                </Text>
+            </TouchableOpacity>
         </ScrollView>
     );
 };
 
+
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
+        flexGrow: 1,
         padding: 20,
+        backgroundColor: '#fff',
     },
     header: {
         flexDirection: 'row',
@@ -129,7 +164,6 @@ const styles = StyleSheet.create({
     },
     backButton: {
         padding: 10,
-        marginRight: 10,
     },
     headerText: {
         fontSize: 20,
@@ -137,12 +171,14 @@ const styles = StyleSheet.create({
         color: '#315381',
         textAlign: 'center',
         flex: 1,
+        marginRight: 44,
     },
     subtitle: {
         fontSize: 16,
         marginBottom: 20,
         color: '#333',
         textAlign: 'center',
+        lineHeight: 24,
     },
     highlightedText: {
         color: '#4A55B1',
@@ -150,9 +186,13 @@ const styles = StyleSheet.create({
     },
     calendarContainer: {
         borderRadius: 10,
-        backgroundColor: '#EFEFEF',
-        padding: 10,
+        backgroundColor: '#F7F7F7',
+        padding: 5,
         marginBottom: 20,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOpacity: 0.1,
+        shadowOffset: { width: 0, height: 1 },
     },
     timeText: {
         fontSize: 16,
@@ -165,7 +205,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'center',
-        marginBottom: 20,
+        marginBottom: 30,
     },
     timeButton: {
         width: 80,
@@ -174,13 +214,12 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF',
         borderWidth: 1,
         borderColor: '#4A55B1',
-        borderRadius: 10,
+        borderRadius: 20,
         justifyContent: 'center',
         alignItems: 'center',
     },
     timeButtonSelected: {
         backgroundColor: '#4A55B1',
-        borderColor: '#4A55B1',
     },
     timeButtonText: {
         fontSize: 14,
@@ -191,11 +230,15 @@ const styles = StyleSheet.create({
     },
     confirmButton: {
         backgroundColor: '#191970',
-        paddingVertical: 12,
-        borderRadius: 10,
+        paddingVertical: 15,
+        borderRadius: 30,
         alignItems: 'center',
         borderColor: '#FAA511',
-        borderWidth: 1,
+        borderWidth: 2,
+    },
+    confirmButtonDisabled: {
+        backgroundColor: '#a9a9a9',
+        borderColor: '#696969'
     },
     confirmButtonText: {
         color: '#FFF',

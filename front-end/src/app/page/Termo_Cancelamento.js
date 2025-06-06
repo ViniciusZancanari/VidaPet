@@ -1,55 +1,108 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Link } from 'expo-router';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Termo_Cancelamento = () => {
-    const navigation = useNavigation();
+    const router = useRouter();
+    // 1. RECEBER o ID do agendamento que será cancelado
+    const { training_service_id } = useLocalSearchParams();
+    const [isLoading, setIsLoading] = useState(false);
+
+    // 2. CRIAR A FUNÇÃO DE CANCELAMENTO
+    const handleConfirmCancellation = async () => {
+        if (!training_service_id) {
+            Alert.alert("Erro", "ID do agendamento não encontrado.");
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            const userDataString = await AsyncStorage.getItem('userData');
+            if (!userDataString) throw new Error('Faça login novamente.');
+            
+            const token = JSON.parse(userDataString)?.token;
+            if (!token) throw new Error('Token de autenticação inválido.');
+
+            // Usando PATCH como exemplo
+            const response = await axios.patch(
+                `https://apipet.com.br/trainingService/CancelTrainingService/${training_service_id}`,
+                {}, // Corpo vazio
+                {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }
+            );
+
+            if (response.status === 200) { // Sucesso geralmente é 200
+                Alert.alert("Cancelamento Realizado", "A aula foi cancelada com sucesso.", [
+                    { text: "OK", onPress: () => router.push('/page/Agenda') }
+                ]);
+            }
+        } catch (error) {
+            console.error("Erro ao cancelar aula:", error.response?.data || error.message);
+            Alert.alert("Erro", "Não foi possível cancelar a aula. Tente novamente.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
-            {/* Botão de fechar no canto superior direito */}
-            <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
+            <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
                 <Ionicons name="close" size={24} color="red" />
             </TouchableOpacity>
 
             <Text style={styles.title}>Política de Cancelamento</Text>
             <Text style={styles.content}>
-                {/* Adicione o texto dos termos de uso e política de privacidade aqui */}
                 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut eget congue turpis, posuere fringilla nulla...
             </Text>
             <Text style={styles.questionText}>Deseja prosseguir com o cancelamento?</Text>
+
             <View style={styles.buttonContainer}>
-                <TouchableOpacity style={styles.button}>
+                {/* BOTÃO SIM: Agora chama a função de cancelamento */}
+                <TouchableOpacity 
+                    style={styles.button} 
+                    onPress={handleConfirmCancellation}
+                    disabled={isLoading}
+                >
                     <LinearGradient
-                        colors={['#E83378', '#F47920']}
+                        colors={isLoading ? ['#ccc', '#aaa'] : ['#E83378', '#F47920']}
                         style={styles.gradientButton}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
                     >
-                        <Link style={styles.buttonText} href="/page/Agenda">
-                            Sim
-                        </Link>
+                        {isLoading ? (
+                            <ActivityIndicator color="#fff" />
+                        ) : (
+                            <Text style={styles.buttonText}>Sim</Text>
+                        )}
                     </LinearGradient>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.button}>
+
+                {/* BOTÃO NÃO: Apenas volta para a tela anterior (Agenda) */}
+                <TouchableOpacity 
+                    style={styles.button} 
+                    onPress={() => router.push('/page/Agenda')}
+                    disabled={isLoading}
+                >
                     <LinearGradient
-                        colors={['#E83378', '#F47920']}
+                        colors={isLoading ? ['#ccc', '#aaa'] : ['#E83378', '#F47920']}
                         style={styles.gradientButton}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
                     >
-                        <Link style={styles.buttonText} href="/page/Agenda">
-                            Não
-                        </Link>
+                        <Text style={styles.buttonText}>Não</Text>
                     </LinearGradient>
                 </TouchableOpacity>
             </View>
         </ScrollView>
     );
 };
+
 
 const styles = StyleSheet.create({
     container: {
@@ -59,12 +112,12 @@ const styles = StyleSheet.create({
     },
     closeButton: {
         position: 'absolute',
-        top: 20,
+        top: 40, // Ajuste para melhor posicionamento
         right: 20,
         zIndex: 1,
     },
     title: {
-        marginTop:50,
+        marginTop: 60, // Aumentado para dar espaço ao botão de fechar
         color: '#0d47a1',
         fontSize: 24,
         fontWeight: 'bold',
@@ -75,6 +128,7 @@ const styles = StyleSheet.create({
         color: 'black',
         fontSize: 16,
         marginBottom: 20,
+        lineHeight: 24,
     },
     questionText: {
         fontSize: 16,
@@ -92,8 +146,10 @@ const styles = StyleSheet.create({
         marginHorizontal: 10,
     },
     gradientButton: {
-        paddingVertical: 10,
+        paddingVertical: 12,
         borderRadius: 25,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     buttonText: {
         color: 'white',

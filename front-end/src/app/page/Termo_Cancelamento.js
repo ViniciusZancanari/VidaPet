@@ -8,11 +8,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Termo_Cancelamento = () => {
     const router = useRouter();
-    // 1. RECEBER o ID do agendamento que será cancelado
     const { training_service_id } = useLocalSearchParams();
     const [isLoading, setIsLoading] = useState(false);
 
-    // 2. CRIAR A FUNÇÃO DE CANCELAMENTO
     const handleConfirmCancellation = async () => {
         if (!training_service_id) {
             Alert.alert("Erro", "ID do agendamento não encontrado.");
@@ -28,23 +26,32 @@ const Termo_Cancelamento = () => {
             const token = JSON.parse(userDataString)?.token;
             if (!token) throw new Error('Token de autenticação inválido.');
 
-            // Usando PATCH como exemplo
-            const response = await axios.patch(
-                `https://apipet.com.br/trainingService/CancelTrainingService/${training_service_id}`,
-                {}, // Corpo vazio
+            // --- ALTERAÇÃO PRINCIPAL AQUI ---
+            // Usando o método DELETE. Ele geralmente não precisa de um corpo (body).
+            // A configuração com os headers é passada como o segundo argumento.
+            const response = await axios.delete(
+                `https://apipet.com.br/trainingService/${training_service_id}`,
                 {
                     headers: { 'Authorization': `Bearer ${token}` }
                 }
             );
 
-            if (response.status === 200) { // Sucesso geralmente é 200
+            // --- MELHORIA NA VERIFICAÇÃO ---
+            // Uma requisição DELETE bem-sucedida pode retornar status 200 (OK) ou 204 (No Content).
+            // É uma boa prática verificar ambos.
+            if (response.status === 200 || response.status === 204) {
                 Alert.alert("Cancelamento Realizado", "A aula foi cancelada com sucesso.", [
                     { text: "OK", onPress: () => router.push('/page/Agenda') }
                 ]);
+            } else {
+                // Caso a API retorne um status de sucesso diferente dos esperados
+                throw new Error(`Resposta inesperada do servidor: ${response.status}`);
             }
         } catch (error) {
+            // O error.response?.data pode conter uma mensagem útil da API
+            const errorMessage = error.response?.data?.message || "Não foi possível cancelar a aula. Tente novamente.";
             console.error("Erro ao cancelar aula:", error.response?.data || error.message);
-            Alert.alert("Erro", "Não foi possível cancelar a aula. Tente novamente.");
+            Alert.alert("Erro", errorMessage);
         } finally {
             setIsLoading(false);
         }
@@ -63,7 +70,7 @@ const Termo_Cancelamento = () => {
             <Text style={styles.questionText}>Deseja prosseguir com o cancelamento?</Text>
 
             <View style={styles.buttonContainer}>
-                {/* BOTÃO SIM: Agora chama a função de cancelamento */}
+                {/* BOTÃO SIM: Chama a função de cancelamento */}
                 <TouchableOpacity 
                     style={styles.button} 
                     onPress={handleConfirmCancellation}
@@ -83,10 +90,12 @@ const Termo_Cancelamento = () => {
                     </LinearGradient>
                 </TouchableOpacity>
 
-                {/* BOTÃO NÃO: Apenas volta para a tela anterior (Agenda) */}
+                {/* BOTÃO NÃO: Apenas volta para a tela anterior */}
+                {/* --- MELHORIA DE UX --- */}
+                {/* Usando router.back() para uma navegação mais natural */}
                 <TouchableOpacity 
                     style={styles.button} 
-                    onPress={() => router.push('/page/Agenda')}
+                    onPress={() => router.back()} // Alterado de .push() para .back()
                     disabled={isLoading}
                 >
                     <LinearGradient
@@ -103,7 +112,7 @@ const Termo_Cancelamento = () => {
     );
 };
 
-
+// Seus estilos (styles) permanecem os mesmos
 const styles = StyleSheet.create({
     container: {
         flexGrow: 1,
@@ -112,12 +121,12 @@ const styles = StyleSheet.create({
     },
     closeButton: {
         position: 'absolute',
-        top: 40, // Ajuste para melhor posicionamento
+        top: 40,
         right: 20,
         zIndex: 1,
     },
     title: {
-        marginTop: 60, // Aumentado para dar espaço ao botão de fechar
+        marginTop: 60,
         color: '#0d47a1',
         fontSize: 24,
         fontWeight: 'bold',
@@ -158,5 +167,6 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
 });
+
 
 export default Termo_Cancelamento;

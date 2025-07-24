@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Link } from 'expo-router';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 
 const NotificationItem = ({ title, time }) => {
@@ -15,35 +16,33 @@ const NotificationItem = ({ title, time }) => {
 const Notificacao2 = () => {
     const [notifications] = useState([
         {
-            title: 'Sua aula está confirmada!',
-            time: 'Você tem uma aula marcada para o dia [dia X] às [hora Y] com o profissional [Profissional Z]',
+            title: 'Lorem ipsum dolor sit amet',
+            time: '3h',
         },
         {
-            title: 'Como foi a sua aula de adestramento',
-            time: 'A sua aula com a Profissional foi concluída! Avalie agora e nos ajude a melhorar a sua experiência'
+            title: 'Donec finibus, nisi nec finibus mattis, lectus mauris gravida ex, nec pretium risus ex eget erat. Pra...',
+            time: '3h',
         },
-
+        {
+            title: 'Lorem ipsum dolor sit amet',
+            time: '3h',
+        },
     ]);
 
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <TouchableOpacity style={styles.backButton}>
-                    <Link
-                        style={styles.backButtonText}
-                        href="/page/Home">{'<'}
-                    </Link>
-                </TouchableOpacity>
+               <TouchableOpacity style={styles.backButton}>
+                         <Link href="/page/Home" style={styles.navItem}>
+                          <Icon name="arrow-back" size={24} color="#ff1744" />
+                         </Link>
+                       </TouchableOpacity>
                 <View style={styles.headerSpacer} />
                 <Text style={styles.headerText}>NOTIFICAÇÕES</Text>
                 <View style={styles.headerSpacer} />
             </View>
             {notifications.map((notification, index) => (
-                <TouchableOpacity key={index}>
-                    <Link href={'/page/Notificacao_AvaliacaoAulaNPS'}>
-                        <NotificationItem title={notification.title} time={notification.time} />
-                    </Link>
-                </TouchableOpacity>
+                <NotificationItem key={index} title={notification.title} time={notification.time} />
             ))}
         </View>
     );

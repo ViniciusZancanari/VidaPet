@@ -139,7 +139,7 @@ const Agenda = () => {
                                     Reagendar
                                 </Link>
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.cancelButton}>
+                            <TouchableOpacity style={styles.actionButton}>
                                 <Link 
                                     href={{
                                         pathname: "/page/Termo_Cancelamento",
@@ -244,17 +244,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    cancelButton: {
-        flex: 1,
-        marginHorizontal: 5,
-        backgroundColor: '#D32F2F', 
-        borderColor: '#B71C1C',
-        borderWidth: 1,
-        borderRadius: 20,
-        paddingVertical: 10,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
+    
     actionButtonText: {
         color: '#fff',
         fontWeight: 'bold',

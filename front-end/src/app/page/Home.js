@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native'; // Importe Alert para feedback em caso de erro
 import { Ionicons } from '@expo/vector-icons';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router'; // Importe useRouter
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -9,6 +9,7 @@ const Home = () => {
   const [trainers, setTrainers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [clientAddress, setClientAddress] = useState('');
+  const router = useRouter(); // Inicialize o useRouter
 
   useEffect(() => {
     const fetchData = async () => {
@@ -17,17 +18,21 @@ const Home = () => {
         setTrainers(trainerRes.data);
 
         const userData = await AsyncStorage.getItem('userData');
-        if (!userData) throw new Error('Usuário não autenticado');
+        if (!userData) {
+          console.warn('Usuário não autenticado. Não foi possível carregar o endereço.');
+          // throw new Error('Usuário não autenticado'); // Você pode optar por lançar um erro ou apenas avisar
+        } else {
+          const { id, token } = JSON.parse(userData);
+          const clientRes = await axios.get(`https://apipet.com.br/client/${id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
 
-        const { id, token } = JSON.parse(userData);
-        const clientRes = await axios.get(`https://apipet.com.br/client/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-
-        const fullAddress = clientRes.data?.address || '';
-        setClientAddress(fullAddress);
+          const fullAddress = clientRes.data?.address || '';
+          setClientAddress(fullAddress);
+        }
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
+        Alert.alert("Erro", "Não foi possível carregar os dados. Tente novamente mais tarde."); // Exibe um alerta amigável
       } finally {
         setLoading(false);
       }
@@ -46,6 +51,18 @@ const Home = () => {
         color={i < rating ? '#00BFFF' : '#ccc'}
       />
     ));
+  };
+
+  // Nova função para lidar com o clique no treinador
+  const handleTrainerPress = async (trainerId) => {
+    try {
+      await AsyncStorage.setItem('selectedTrainerId', String(trainerId)); // Salva o ID como string
+      console.log('ID do treinador salvo:', trainerId);
+      router.push('/page/PerfilAdestrador'); // Navega para a tela de perfil do adestrador
+    } catch (error) {
+      console.error("Erro ao salvar o ID do treinador:", error);
+      Alert.alert("Erro", "Não foi possível selecionar o treinador.");
+    }
   };
 
   return (
@@ -75,11 +92,15 @@ const Home = () => {
             <ActivityIndicator size="large" color="#00BFFF" />
           ) : trainers.length > 0 ? (
             trainers.map((trainer) => {
-              console.log(`${trainer.username} - Premium:`, trainer.isPremium); // 👈 log para depuração
+              console.log(`${trainer.username} - Premium:`, trainer.isPremium);
 
               return (
                 <View key={trainer.id} style={styles.cardContainer}>
-                  <TouchableOpacity style={styles.card} onPress={() => { }}>
+                  {/* Modificação aqui: Chame handleTrainerPress no onPress do TouchableOpacity */}
+                  <TouchableOpacity
+                    style={styles.card}
+                    onPress={() => handleTrainerPress(trainer.id)}
+                  >
                     {(trainer.isPremium === true || trainer.isPremium === 'true') && (
                       <View style={styles.premiumTag}>
                         <View style={styles.premiumDot} />
@@ -87,23 +108,22 @@ const Home = () => {
                       </View>
                     )}
                     <Image source={require('../../../assets/perfil.png')} style={styles.cardImage} />
-                    <Link href="/page/PerfilAdestrador" style={styles.cardLink}>
-                      <View style={styles.cardContent}>
-                        <View style={styles.cardHeader}>
-                          <Text style={styles.cardName}>{trainer.username || 'Nome não disponível'}</Text>
-                        </View>
-                        <View style={styles.ratingRow}>
-                          {renderHearts(trainer.rating || 0)}
-                        </View>
-                        <Text style={styles.cardDetails} numberOfLines={2} ellipsizeMode="tail">
-                          <Ionicons name="location" size={14} color="gray" /> {`${trainer.address || 'Endereço não disponível'}`}
-                        </Text>
-                        <Text style={styles.cardPrice}>
-                          <Ionicons name="cash-outline" size={14} color="green" /> R${trainer.hourly_rate || '00'}/hora
-                        </Text>
-                        <Text style={styles.cardMember}>Membro do app desde {trainer.member_since || 'Fev/23'}</Text>
+                    {/* Remova o Link que envolvia o cardContent para usar a navegação programática */}
+                    <View style={styles.cardContent}>
+                      <View style={styles.cardHeader}>
+                        <Text style={styles.cardName}>{trainer.username || 'Nome não disponível'}</Text>
                       </View>
-                    </Link>
+                      <View style={styles.ratingRow}>
+                        {renderHearts(trainer.rating || 0)}
+                      </View>
+                      <Text style={styles.cardDetails} numberOfLines={2} ellipsizeMode="tail">
+                        <Ionicons name="location" size={14} color="gray" /> {`${trainer.address || 'Endereço não disponível'}`}
+                      </Text>
+                      <Text style={styles.cardPrice}>
+                        <Ionicons name="cash-outline" size={14} color="green" /> R${trainer.hourly_rate || '00'}/hora
+                      </Text>
+                      <Text style={styles.cardMember}>Membro do app desde {trainer.member_since || 'Fev/23'}</Text>
+                    </View>
                   </TouchableOpacity>
                 </View>
               );

@@ -8,6 +8,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Link, useRouter } from 'expo-router';
 import { jwtDecode } from "jwt-decode";
+import { useAuth } from '../context/AuthContext'; // ajuste o caminho conforme seu projeto
 
 export const Login = () => {
   const [email, setEmail] = useState('');
@@ -15,7 +16,10 @@ export const Login = () => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [tokenDebug, setTokenDebug] = useState('');
   const router = useRouter();
+
+  const { login } = useAuth(); // <-- ADICIONADO AQUI
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
@@ -35,15 +39,11 @@ export const Login = () => {
       if (response.status === 200 && response.data.token) {
         const token = response.data.token;
 
-        // Decodificar o token para pegar o ID
-        const decoded = jwtDecode(token);
-        const userId = decoded.sub; // pega o "sub" do token
+        console.log("Token recebido:", token);
+        setTokenDebug(token);
 
-        // Agora salva o token e o id no AsyncStorage
-        await AsyncStorage.setItem('userData', JSON.stringify({
-          token,
-          id: userId,
-        }));
+        // Usa o método do contexto para salvar o token e atualizar estado global
+        await login(token);
 
         setIsLoggedIn(true);
       }
@@ -74,59 +74,68 @@ export const Login = () => {
   }, [isLoggedIn]);
 
   return (
-      <ScrollView
-        contentContainerStyle={styles.container}
-        keyboardShouldPersistTaps="handled"
+    <ScrollView
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+    >
+      <Image style={styles.logo} source={require('../../../assets/logo1.png')} />
+
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>E-mail:</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="E-mail:"
+          placeholderTextColor="#FFF"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+        <LinearGradient colors={['#E83378', '#F47920']} style={styles.gradientLine} />
+      </View>
+
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Senha:</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Senha:"
+          placeholderTextColor="#FFF"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
+        <LinearGradient colors={['#E83378', '#F47920']} style={styles.gradientLine} />
+      </View>
+
+      {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+
+      <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
+        {loading ? <ActivityIndicator color="#000" /> : <Text style={styles.buttonText}>Entrar</Text>}
+      </TouchableOpacity>
+
+      <Text style={styles.buttonText2}>Ainda não possui conta?</Text>
+
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => router.push('/page/Termos')}
+        activeOpacity={0.7}
       >
-        <Image style={styles.logo} source={require('../../../assets/logo1.png')} />
+        <Text style={styles.buttonText}>Cadastre-se</Text>
+      </TouchableOpacity>
 
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>E-mail:</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="E-mail:"
-            placeholderTextColor="#FFF"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          <LinearGradient colors={['#E83378', '#F47920']} style={styles.gradientLine} />
+      <TouchableOpacity style={styles.button}>
+        <Text style={styles.buttonText}>Fazer login com o Google</Text>
+      </TouchableOpacity>
+
+      {/* Exibe o token na tela (para debug) */}
+      {tokenDebug ? (
+        <View style={{ paddingHorizontal: 20 }}>
+          <Text style={{ color: 'white', fontSize: 12, marginTop: 10 }}>
+            Token: {tokenDebug}
+          </Text>
         </View>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Senha:</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Senha:"
-            placeholderTextColor="#FFF"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-          />
-          <LinearGradient colors={['#E83378', '#F47920']} style={styles.gradientLine} />
-        </View>
-
-        {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-
-        <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
-          {loading ? <ActivityIndicator color="#000" /> : <Text style={styles.buttonText}>Entrar</Text>}
-        </TouchableOpacity>
-
-        <Text style={styles.buttonText2}>Ainda não possui conta?</Text>
-
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => router.push('/page/Termos')} // Navegação via router
-          activeOpacity={0.7}
-        >
-          <Text style={styles.buttonText}>Cadastre-se</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Fazer login com o Google</Text>
-        </TouchableOpacity>
-      </ScrollView>
+      ) : null}
+    </ScrollView>
   );
 };
 
@@ -137,7 +146,6 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     alignItems: 'center',
-  
     backgroundColor: '#1C4175'
   },
   logo: {

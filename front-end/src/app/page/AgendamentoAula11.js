@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link } from 'expo-router';
@@ -6,24 +6,27 @@ import { Link } from 'expo-router';
 const AgendamentoAula11 = () => {
     return (
         <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
-            {/* X no canto superior para voltar à página PerfilAdestrador */}
+            {/* X no canto superior direito */}
             <View style={styles.header}>
                 <Link href="/page/Home">
                     <Text style={styles.closeButtonText}>X</Text>
                 </Link>
             </View>
 
-            <Text style={styles.headerText}>Cartão de Crédito</Text>
+            {/* Título */}
+            <View style={styles.titleContainer}>
+                <Text style={styles.headerText}>Cartão de Crédito</Text>
+            </View>
 
+            {/* Cartão Visa */}
             <TouchableOpacity style={styles.cartoes}>
-                <Image source={require('../../../assets/visa.png')} />
-                <Link style={styles.cartao} href="/page/AgendamentoAula7">
+                <Image source={require('../../../assets/visa.png')} style={styles.cartaoImagem}/>
+                <Link style={styles.cartaoLink} href="/page/AgendamentoAula7">
                     <View>
                         <Text style={styles.cartaoTitle}>Visa - Crédito</Text>
-                        <Text style={styles.cartaoNumber}>000000000000</Text>
+                        <Text style={styles.cartaoNumber}>•••• 0000</Text>
                     </View>
                 </Link>
-
                 <View style={styles.cardActions}>
                     <TouchableOpacity style={styles.iconButton}>
                         <Image source={require('../../../assets/editar.png')} style={styles.icon} />
@@ -34,15 +37,15 @@ const AgendamentoAula11 = () => {
                 </View>
             </TouchableOpacity>
 
+            {/* Cartão Mastercard */}
             <TouchableOpacity style={styles.cartoes}>
-                <Image source={require('../../../assets/mastercard.png')} />
-                <Link style={styles.cartao} href="/page/AgendamentoAula7">
+                <Image source={require('../../../assets/mastercard.png')} style={styles.cartaoImagem}/>
+                <Link style={styles.cartaoLink} href="/page/AgendamentoAula7">
                     <View>
                         <Text style={styles.cartaoTitle}>Mastercard - Crédito</Text>
-                        <Text style={styles.cartaoNumber}>000000000000</Text>
+                        <Text style={styles.cartaoNumber}>•••• 0000</Text>
                     </View>
                 </Link>
-
                 <View style={styles.cardActions}>
                     <TouchableOpacity style={styles.iconButton}>
                         <Image source={require('../../../assets/editar.png')} style={styles.icon} />
@@ -53,6 +56,7 @@ const AgendamentoAula11 = () => {
                 </View>
             </TouchableOpacity>
 
+            {/* Botão adicionar cartão */}
             <TouchableOpacity style={styles.button}>
                 <Link style={styles.buttonText} href="/page/AgendamentoAula12">
                     Cadastrar novo cartão
@@ -71,18 +75,22 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: 40,
         right: 20,
+        zIndex: 10,
     },
     closeButtonText: {
         fontSize: 24,
         color: '#fff',
         fontWeight: 'bold',
     },
+    titleContainer: {
+        marginTop: 80, // espaço para o X
+        marginBottom: 20,
+        alignItems: 'center',
+    },
     headerText: {
-        color: 'white',
-        fontSize: 20,
+        color: '#fff',
+        fontSize: 22,
         fontWeight: 'bold',
-        marginBottom: 10,
-        alignItems: 'baseline',
     },
     cartoes: {
         flexDirection: 'row',
@@ -97,28 +105,24 @@ const styles = StyleSheet.create({
         shadowRadius: 5,
         elevation: 5,
     },
-    cartao: {
+    cartaoImagem: {
+        width: 40,
+        height: 40,
+        resizeMode: 'contain',
+    },
+    cartaoLink: {
         flex: 1,
         marginLeft: 10,
+    },
+    cartaoTitle: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#888',
+        color: '#315381',
     },
-    button: {
-        backgroundColor: '#191970',
-        paddingVertical: 10,
-        paddingHorizontal: 80,
-        borderRadius: 30,
-        marginBottom: 50,
-        marginTop: 20,
-        borderWidth: 3,
-        borderStyle: 'solid',
-        borderColor: '#faac0f',
-    },
-    buttonText: {
-        color: '#fff',
-        fontSize: 18,
-        textAlign: 'center',
+    cartaoNumber: {
+        fontSize: 14,
+        color: '#555',
+        marginTop: 4,
     },
     cardActions: {
         flexDirection: 'row',
@@ -129,6 +133,21 @@ const styles = StyleSheet.create({
     icon: {
         width: 20,
         height: 20,
+    },
+    button: {
+        backgroundColor: '#191970',
+        paddingVertical: 12,
+        borderRadius: 30,
+        marginTop: 20,
+        alignSelf: 'center',
+        paddingHorizontal: 60,
+        borderWidth: 3,
+        borderColor: '#faac0f',
+    },
+    buttonText: {
+        color: '#fff',
+        fontSize: 18,
+        textAlign: 'center',
     },
 });
 

@@ -4,7 +4,7 @@ import { Calendar } from 'react-native-calendars';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Importar o AsyncStorage
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Reagendar = () => {
     const [selectedDate, setSelectedDate] = useState('');
@@ -16,10 +16,28 @@ const Reagendar = () => {
 
     const handleDayPress = (day) => {
         setSelectedDate(day.dateString);
+        setSelectedTime('');
     };
 
     const handleTimeSelect = (time) => {
         setSelectedTime(time);
+    };
+
+    const isTimeDisabled = (time) => {
+        if (!selectedDate) return true;
+
+        const now = new Date();
+        const todayStr = now.toISOString().split('T')[0];
+
+        if (selectedDate > todayStr) return false; // Data futura
+        if (selectedDate < todayStr) return true;  // Data passada
+
+        // Se for hoje, compara o horário
+        const [hour, minute] = time.split(':').map(Number);
+        const selectedTimeDate = new Date();
+        selectedTimeDate.setHours(hour, minute, 0, 0);
+
+        return selectedTimeDate.getTime() <= now.getTime();
     };
 
     const handleConfirmReschedule = async () => {
@@ -31,54 +49,35 @@ const Reagendar = () => {
         setIsLoading(true);
 
         try {
-            // 1. BUSCAR O TOKEN DE AUTENTICAÇÃO DO ASYNCSTORAGE
             const userDataString = await AsyncStorage.getItem('userData');
-            if (!userDataString) {
-                // Se não encontrar dados do usuário, não prossegue
-                throw new Error('Dados de autenticação não encontrados. Faça login novamente.');
-            }
+            if (!userDataString) throw new Error('Dados de autenticação não encontrados. Faça login novamente.');
             
             const userData = JSON.parse(userDataString);
-            const token = userData?.token; // Assumindo que o token está salvo como 'token'
+            const token = userData?.token;
 
-            if (!token) {
-                // Se não encontrar o token, não prossegue
-                throw new Error('Token de autenticação inválido. Faça login novamente.');
-            }
+            if (!token) throw new Error('Token de autenticação inválido. Faça login novamente.');
 
-            // Prepara o payload (corpo da requisição)
             const newIsoDate = `${selectedDate}T${selectedTime}:00.000Z`;
             const payload = {
                 newAvailableDate: newIsoDate,
                 newHourClass: selectedTime,
             };
 
-            console.log(`Enviando PUT para /trainingService/reschedule/${training_service_id}`);
-            console.log("Payload:", payload);
-
-            // 2. FAZER A REQUISIÇÃO PUT COM O TOKEN NOS HEADERS
             const response = await axios.put(
                 `https://apipet.com.br/trainingService/reschedule/${training_service_id}`,
                 payload,
                 {
-                    headers: {
-                        // Adiciona o cabeçalho de autorização
-                        'Authorization': `Bearer ${token}` 
-                    }
+                    headers: { 'Authorization': `Bearer ${token}` }
                 }
             );
 
             if (response.status === 200) {
                 Alert.alert('Sucesso!', 'Sua aula foi reagendada.', [
-                    {
-                        text: 'OK',
-                        onPress: () => router.push('/page/Agenda'),
-                    },
+                    { text: 'OK', onPress: () => router.push('/page/Agenda') },
                 ]);
             }
         } catch (error) {
             console.error('Erro ao reagendar:', error.response?.data || error.message);
-            // Mostra a mensagem de erro que veio do 'try' ou do servidor
             Alert.alert('Erro', error.message || 'Não foi possível reagendar a aula.');
         } finally {
             setIsLoading(false);
@@ -94,12 +93,16 @@ const Reagendar = () => {
     }, [trainer_id]);
 
     const timeSlots = [
-        '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', 
+        '08:00', '09:00', '10:00', '11:00', '12:00', '13:00',
         '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'
     ];
 
+    const getMinDate = () => {
+        const today = new Date();
+        return today.toISOString().split('T')[0];
+    };
+
     return (
-        // O SEU CÓDIGO VISUAL (JSX) PERMANECE O MESMO
         <ScrollView contentContainerStyle={styles.container}>
             <View style={styles.header}>
                 <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
@@ -109,13 +112,17 @@ const Reagendar = () => {
             </View>
 
             <Text style={styles.subtitle}>
-                Selecione um novo dia e horário para a aula com <Text style={styles.highlightedText}>{trainer ? trainer.username : '...'}</Text>
+                Selecione um novo dia e horário para a aula com{' '}
+                <Text style={styles.highlightedText}>{trainer ? trainer.username : '...'}</Text>
             </Text>
 
             <View style={styles.calendarContainer}>
                 <Calendar
                     onDayPress={handleDayPress}
-                    markedDates={{ [selectedDate]: { selected: true, selectedColor: '#4A55B1' } }}
+                    minDate={getMinDate()}
+                    markedDates={{
+                        [selectedDate]: { selected: true, selectedColor: '#4A55B1' }
+                    }}
                     theme={{
                         selectedDayBackgroundColor: '#4A55B1',
                         todayTextColor: '#EF5C43',
@@ -126,15 +133,29 @@ const Reagendar = () => {
 
             <Text style={styles.timeText}>Escolha um horário:</Text>
             <View style={styles.timeGrid}>
-                {timeSlots.map((time) => (
-                    <TouchableOpacity
-                        key={time}
-                        style={[styles.timeButton, selectedTime === time && styles.timeButtonSelected]}
-                        onPress={() => handleTimeSelect(time)}
-                    >
-                        <Text style={[styles.timeButtonText, selectedTime === time && styles.timeButtonTextSelected]}>{time}</Text>
-                    </TouchableOpacity>
-                ))}
+                {timeSlots.map((time) => {
+                    const disabled = isTimeDisabled(time);
+                    return (
+                        <TouchableOpacity
+                            key={time}
+                            style={[
+                                styles.timeButton,
+                                selectedTime === time && styles.timeButtonSelected,
+                                disabled && styles.timeButtonDisabled
+                            ]}
+                            onPress={() => !disabled && handleTimeSelect(time)}
+                            disabled={disabled}
+                        >
+                            <Text style={[
+                                styles.timeButtonText,
+                                selectedTime === time && styles.timeButtonTextSelected,
+                                disabled && styles.timeButtonTextDisabled
+                            ]}>
+                                {time}
+                            </Text>
+                        </TouchableOpacity>
+                    );
+                })}
             </View>
 
             <TouchableOpacity 
@@ -149,7 +170,6 @@ const Reagendar = () => {
         </ScrollView>
     );
 };
-
 
 const styles = StyleSheet.create({
     container: {
@@ -221,12 +241,19 @@ const styles = StyleSheet.create({
     timeButtonSelected: {
         backgroundColor: '#4A55B1',
     },
+    timeButtonDisabled: {
+        backgroundColor: '#E0E0E0',
+        borderColor: '#B0B0B0',
+    },
     timeButtonText: {
         fontSize: 14,
         color: '#4A55B1',
     },
     timeButtonTextSelected: {
         color: '#FFF',
+    },
+    timeButtonTextDisabled: {
+        color: '#A0A0A0',
     },
     confirmButton: {
         backgroundColor: '#191970',

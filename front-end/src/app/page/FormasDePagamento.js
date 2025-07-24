@@ -66,8 +66,8 @@ const FormasDePagamento = () => {
             <TouchableOpacity style={styles.button} >
                 <Link
                     style={styles.buttonText}
-                    href={'/page/AgendamentoAula11'}
-                >Adicionar Cartão
+                    href={'/page/FormasDePagamento2'}>
+                Adicionar Cartão
                 </Link>
             </TouchableOpacity>
         </View>

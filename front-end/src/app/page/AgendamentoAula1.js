@@ -16,7 +16,7 @@ const AgendamentoAula1 = () => {
 
   useEffect(() => {
     axios
-      .get('http://164.152.36.73:3000/trainingService/')
+      .get('https://apipet.com.br/trainingService/')
       .then((response) => {
         const data = response.data;
         const dates = {};

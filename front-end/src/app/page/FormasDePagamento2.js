@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList, Linking } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Link } from 'expo-router';
 
 const FormasDePagamento2 = () => {
@@ -103,7 +102,7 @@ const FormasDePagamento2 = () => {
     }, []);
 
     return (
-        <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
+        <View style={styles.container}>
             <View style={styles.header}>
                 <TouchableOpacity style={styles.backButton}>
                     <Link
@@ -153,7 +152,7 @@ const FormasDePagamento2 = () => {
                     </View>
                 )}
             />
-        </LinearGradient>
+        </View>
     );
 };
 

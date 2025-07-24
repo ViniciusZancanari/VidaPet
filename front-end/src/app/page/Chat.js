@@ -1,5 +1,4 @@
-// Chat.js
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,61 +8,71 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
+  ActivityIndicator,
 } from 'react-native';
-// Se você não estiver usando um ícone de 'react-native-vector-icons' para a seta,
-// pode remover a importação de Icon, caso a tenha.
-// import Icon from 'react-native-vector-icons/Ionicons';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Chat = () => {
-  const chatItemsData = [
-    {
-      id: '1',
-      name: 'Thiago Oliveira Freitas',
-      preview: 'Cum earum modi ea autem aliquam ut dolor voluptas. Vel archite...',
-      date: '16/01/2024',
-      unread: 1,
-      avatarSource: require('../../../assets/perfil.png'), // Caminho para sua imagem local
-    },
-    {
-      id: '2',
-      name: 'Thiago Oliveira Freitas',
-      preview: 'Cum earum modi ea autem aliquam ut dolor voluptas. Vel archite...',
-      date: '16/01/2024',
-      unread: 3,
-      avatarSource: require('../../../assets/perfil.png'), // Caminho para sua imagem local
-    },
-    {
-      id: '3',
-      name: 'Thiago Oliveira Freitas',
-      preview: 'Cum earum modi ea autem aliquam ut dolor voluptas. Vel archite...',
-      date: '16/01/2024',
-      unread: 6,
-      avatarSource: require('../../../assets/perfil.png'), // Caminho para sua imagem local
-    },
-    {
-      id: '4',
-      name: 'Thiago Oliveira Freitas',
-      preview: 'Cum earum modi ea autem aliquam ut dolor voluptas. Vel archite...',
-      date: '16/01/2024',
-      unread: 12,
-      avatarSource: require('../../../assets/perfil.png'), // Caminho para sua imagem local
-    },
-  ];
+  const [conversations, setConversations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Componente para renderizar cada item da lista
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        const token = await AsyncStorage.getItem('userToken');
+        console.log('TOKEN ARMAZENADO:', token); // <-- DEBUG
+
+        if (!token) {
+          setError('Você precisa estar logado para ver suas conversas.');
+          return;
+        }
+
+        const response = await fetch('https://apipet.com.br/chat/conversations', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          const responseBody = await response.text();
+          console.warn('Resposta não OK:', response.status, responseBody); // <-- DEBUG extra
+          throw new Error('Falha ao buscar as conversas. Tente novamente mais tarde.');
+        }
+
+        const data = await response.json();
+        const adaptedData = data.map(item => ({
+          id: item.id,
+          name: item.userName,
+          preview: item.lastMessage,
+          date: new Date(item.lastMessageDate).toLocaleDateString('pt-BR'),
+          unread: item.unreadMessages,
+          avatarSource: item.avatarUrl ? { uri: item.avatarUrl } : require('../../../assets/perfil.png'),
+        }));
+        
+        setConversations(adaptedData);
+      } catch (e) {
+        console.error('Erro ao buscar conversas:', e); // <-- LOG adicional
+        setError(e.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchConversations();
+  }, []);
+
   const renderChatItem = ({ item }) => (
     <Link href="/page/Chat-Conversa" asChild>
       <TouchableOpacity style={styles.chatItemContainer}>
         <Image source={item.avatarSource} style={styles.avatar} />
         <View style={styles.contentContainer}>
           <View style={styles.textContainer}>
-            <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">
-              {item.name}
-            </Text>
-            <Text style={styles.preview} numberOfLines={1} ellipsizeMode="tail">
-              {item.preview}
-            </Text>
+            <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
+            <Text style={styles.preview} numberOfLines={1}>{item.preview}</Text>
           </View>
           <View style={styles.infoContainer}>
             <Text style={styles.date}>{item.date}</Text>
@@ -78,6 +87,42 @@ const Chat = () => {
     </Link>
   );
 
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#FF4136" />
+          <Text>Carregando conversas...</Text>
+        </View>
+      );
+    }
+
+    if (error) {
+      return (
+        <View style={styles.centered}>
+          <Text style={styles.errorText}>Erro: {error}</Text>
+        </View>
+      );
+    }
+
+    if (conversations.length === 0) {
+      return (
+        <View style={styles.centered}>
+          <Text>Nenhuma conversa encontrada.</Text>
+        </View>
+      );
+    }
+
+    return (
+      <FlatList
+        data={conversations}
+        renderItem={renderChatItem}
+        keyExtractor={(item) => item.id.toString()}
+        contentContainerStyle={styles.listContentContainer}
+      />
+    );
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
@@ -88,112 +133,61 @@ const Chat = () => {
           </TouchableOpacity>
         </Link>
         <Text style={styles.headerTitle}>CONVERSAS</Text>
-        {/* Espaçador para ajudar a centralizar o título quando o botão de voltar está presente */}
         <View style={{ width: 30 }} />
       </View>
-
-      <FlatList
-        data={chatItemsData}
-        renderItem={renderChatItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContentContainer}
-      />
+      {renderContent()}
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#FFF', // Cor de fundo da tela inteira
-  },
+  safeArea: { flex: 1, backgroundColor: '#FFF' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between', // Para alinhar itens (botão, título, espaçador)
+    justifyContent: 'space-between',
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0', // Linha divisória do cabeçalho
-    backgroundColor: 'white', // Fundo do cabeçalho
+    borderBottomColor: '#E0E0E0',
+    backgroundColor: 'white',
   },
-  backButton: {
-    // Ajuste o padding se necessário para aumentar a área de toque
-    paddingRight: 10, // Espaço à direita do ícone dentro do botão
-    zIndex: 1, // Garante que o botão de voltar esteja clicável
-  },
-  backArrowIcon: {
-    fontSize: 28, // Tamanho do ícone de seta
-    color: '#FF4136', // Cor da seta (vermelho)
-    fontWeight: 'bold',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333', // Cor do título
-    // O título será naturalmente centralizado pelo justifyContent: 'space-between' no header
-    // se o botão e o espaçador tiverem larguras "similares" ou se o título puder ocupar o espaço flexível.
-  },
-  listContentContainer: {
-    paddingBottom: 16, // Espaço no final da lista
-  },
+  backButton: { paddingRight: 10, zIndex: 1 },
+  backArrowIcon: { fontSize: 28, color: '#FF4136', fontWeight: 'bold' },
+  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
+  listContentContainer: { paddingBottom: 16 },
   chatItemContainer: {
     flexDirection: 'row',
     paddingHorizontal: 16,
     paddingVertical: 12,
     alignItems: 'center',
-    backgroundColor: '#F8F8F8', // Cor de fundo do item
+    backgroundColor: '#F8F8F8',
     borderBottomWidth: 1,
-    borderBottomColor: '#EDEDED', // Linha divisória sutil entre itens
+    borderBottomColor: '#EDEDED',
   },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25, // Metade da largura/altura para um círculo perfeito
-    marginRight: 12, // Espaço entre o avatar e o conteúdo de texto
-  },
-  contentContainer: { // Container para os blocos de texto e informações (data/badge)
-    flex: 1, // Ocupa o espaço restante
+  avatar: { width: 50, height: 50, borderRadius: 25, marginRight: 12 },
+  contentContainer: {
+    flex: 1,
     flexDirection: 'row',
-    justifyContent: 'space-between', // Separa o bloco de nome/preview do bloco de data/badge
+    justifyContent: 'space-between',
   },
-  textContainer: { // Container para nome e preview
-    flex: 1, // Permite que este container cresça e o texto quebre linha se necessário
-    marginRight: 8, // Espaço antes do container de data/badge
-  },
-  name: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333', // Cor do nome
-    marginBottom: 4, // Espaço entre o nome e a prévia da mensagem
-  },
-  preview: {
-    fontSize: 14,
-    color: '#666', // Cor da prévia da mensagem
-  },
-  infoContainer: { // Container para data e badge
-    alignItems: 'flex-end', // Alinha data e contador à direita e um sobre o outro
-    // justifyContent: 'center', // Pode ser usado se quiser centralizar verticalmente data e badge
-  },
-  date: {
-    fontSize: 12,
-    color: '#888', // Cor da data
-    marginBottom: 8, // Espaço entre a data e o contador de não lidas
-  },
+  textContainer: { flex: 1, marginRight: 8 },
+  name: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 4 },
+  preview: { fontSize: 14, color: '#666' },
+  infoContainer: { alignItems: 'flex-end' },
+  date: { fontSize: 12, color: '#888', marginBottom: 8 },
   badgeContainer: {
-    backgroundColor: '#FF4136', // Cor do badge de não lidas (vermelho)
-    borderRadius: 12, // Para torná-lo circular/ovalado
-    paddingHorizontal: 8, // Espaçamento horizontal dentro do badge
-    paddingVertical: 4,   // Espaçamento vertical dentro do badge
-    minWidth: 24,         // Largura mínima para acomodar números de 1 ou 2 dígitos
-    alignItems: 'center',   // Centraliza o texto do badge horizontalmente
-    justifyContent: 'center', // Centraliza o texto do badge verticalmente
+    backgroundColor: '#FF4136',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    minWidth: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  badgeText: {
-    color: '#FFF', // Cor do texto dentro do badge
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
+  badgeText: { color: '#FFF', fontSize: 12, fontWeight: 'bold' },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  errorText: { color: 'red', fontSize: 16, textAlign: 'center', paddingHorizontal: 20 },
 });
 
 export default Chat;

@@ -1,31 +1,50 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
+import {
+  View, Text, StyleSheet, Image, TouchableOpacity, ScrollView
+} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { jwtDecode } from 'jwt-decode';
+import { useAuth } from '../context/AuthContext'; // ajuste o caminho se necessário
 
 const Perfil = () => {
   const [user, setUser] = useState(null);
   const router = useRouter();
+  const { token } = useAuth();
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const userData = await AsyncStorage.getItem('userData');
-        if (userData) {
-            const user = JSON.parse(userData);
-            const response = await axios.get(`https://apipet.com.br/client/${user.id}`);
-            setUser(response.data);
+        if (!token) {
+          console.warn('Token não encontrado');
+          router.push('/login');
+          return;
         }
+
+        const decoded = jwtDecode(token);
+        const userId = decoded?.sub;
+
+        if (!userId) {
+          console.warn('ID do usuário não encontrado no token');
+          router.push('/login');
+          return;
+        }
+
+        const response = await axios.get(`https://apipet.com.br/client/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        setUser(response.data);
       } catch (error) {
         console.error('Erro ao buscar os dados do usuário:', error);
+        router.push('/login');
       }
     };
 
     fetchUserData();
-  }, []);
+  }, [token]);
 
   return (
     <View style={styles.container}>
@@ -163,12 +182,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#315381',
     textAlign: 'center',
-    marginTop: 8, 
+    marginTop: 8,
   },
   profileImageContainer: {
     borderRadius: 25,
     overflow: 'hidden',
-    // As propriedades borderWidth e borderColor foram removidas daqui
   },
   profileImage: {
     width: 50,

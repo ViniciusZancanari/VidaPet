@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Checkbox from 'expo-checkbox';
 import axios from 'axios';
@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 
 const Cadastro = () => {
   const router = useRouter();
+
   const [isSelected, setSelection] = useState(false);
   const [isSMSSelected, setSMSSelection] = useState(false);
   const [username, setUsername] = useState('');
@@ -17,46 +18,44 @@ const Cadastro = () => {
   const [address, setAddress] = useState('');
   const [cellphone, setCellphone] = useState('');
 
- const handleRegister = async () => {
-  if (!username || !password || !confirmarSenha || !email ||  !cellphone) {
-    alert('Preencha todos os campos');
-    return;
-  }
-
-  if (password !== confirmarSenha) {
-    alert('As senhas não coincidem');
-    return;
-  }
-
-  const payload = {
-    username,
-    password,
-    email,
-    cellphone,
-    privacy_policy: isSelected,
-    sms_whatsapp_messages: isSMSSelected,
-  };
-
-  console.log('Dados enviados:', payload);
-
-  try {
-    const response = await axios.post('https://apipet.com.br/client', payload);
-
-    console.log('Resposta backend:', response.data);
-
-    if (response.data && response.data.id) {
-      alert('Cadastro realizado com sucesso!');
-      router.push('page/Home');
-    } else {
-      alert('Erro: Usuário não criado corretamente. Verifique os dados.');
-      console.warn('Resposta inesperada do servidor:', response.data);
+  const handleRegister = async () => {
+    if (!username || !password || !confirmarSenha || !email || !cellphone) {
+      Alert.alert('Atenção', 'Por favor, preencha todos os campos obrigatórios.');
+      return;
     }
-  } catch (error) {
-    console.error('Erro na requisição:', error.response ? error.response.data : error.message);
 
-    alert('Erro ao realizar cadastro:\n' + (error.response ? JSON.stringify(error.response.data, null, 2) : error.message));
-  }
-};
+    if (password !== confirmarSenha) {
+      Alert.alert('Atenção', 'As senhas não coincidem.');
+      return;
+    }
+
+    const payload = {
+      username,
+      password,
+      email,
+      cellphone,
+      privacy_policy: isSelected,
+      sms_whatsapp_messages: isSMSSelected,
+    };
+
+    try {
+      // Apenas envia a requisição para cadastrar o usuário
+      await axios.post('https://apipet.com.br/client', payload);
+      
+      // Se a requisição foi bem-sucedida (não deu erro), exibe o alerta de sucesso
+      Alert.alert(
+        'Sucesso!', 
+        'Cadastro realizado. Agora você será redirecionado para fazer o login.'
+      );
+      
+      // Redireciona o usuário para a tela de login
+      router.push('page/Login'); 
+
+    } catch (error) {
+      console.error('Erro na requisição:', error.response ? error.response.data : error.message);
+      Alert.alert('Erro ao realizar cadastro', error.response?.data?.message || 'Verifique os dados e tente novamente.');
+    }
+  };
 
 
   return (
@@ -71,13 +70,13 @@ const Cadastro = () => {
 
       <View style={styles.inputContainer}>
         <Text style={styles.inputLabel}>E-mail:</Text>
-        <TextInput style={styles.input} placeholder="E-mail" placeholderTextColor="#FFF" value={email} onChangeText={setEmail} />
+        <TextInput style={styles.input} placeholder="E-mail" placeholderTextColor="#FFF" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
         <LinearGradient colors={['#E83378', '#F47920']} style={styles.gradientLine} />
       </View>
 
       <View style={styles.inputContainer}>
         <Text style={styles.inputLabel}>Celular:</Text>
-        <TextInput style={styles.input} placeholder="Celular" placeholderTextColor="#FFF" value={cellphone} onChangeText={setCellphone} />
+        <TextInput style={styles.input} placeholder="Celular" placeholderTextColor="#FFF" value={cellphone} onChangeText={setCellphone} keyboardType="phone-pad" />
         <LinearGradient colors={['#E83378', '#F47920']} style={styles.gradientLine} />
       </View>
 
@@ -110,7 +109,7 @@ const Cadastro = () => {
   );
 };
 
-
+// ... Seus estilos continuam aqui
 const styles = StyleSheet.create({
   contentContainer: {
     flexGrow: 1,
@@ -152,6 +151,7 @@ const styles = StyleSheet.create({
   label: {
     marginLeft: 8,
     color: 'white',
+    flexShrink: 1, // Permite que o texto quebre a linha se necessário
   },
   button: {
     backgroundColor: '#fff',
@@ -159,6 +159,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
     marginTop: 20,
+    marginBottom: 40, // Adiciona espaço no final
   },
   buttonText: {
     color: '#000',

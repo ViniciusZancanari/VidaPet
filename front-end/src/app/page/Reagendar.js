@@ -4,7 +4,7 @@ import { Calendar } from 'react-native-calendars';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../context/AuthContext'; // 1. Importar o useAuth
 
 const Reagendar = () => {
     const [selectedDate, setSelectedDate] = useState('');
@@ -13,6 +13,7 @@ const Reagendar = () => {
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
     const { trainer_id, training_service_id } = useLocalSearchParams();
+    const { token } = useAuth(); // 2. Usar o hook para obter o token
 
     const handleDayPress = (day) => {
         setSelectedDate(day.dateString);
@@ -29,10 +30,9 @@ const Reagendar = () => {
         const now = new Date();
         const todayStr = now.toISOString().split('T')[0];
 
-        if (selectedDate > todayStr) return false; // Data futura
-        if (selectedDate < todayStr) return true;  // Data passada
+        if (selectedDate > todayStr) return false;
+        if (selectedDate < todayStr) return true;
 
-        // Se for hoje, compara o horário
         const [hour, minute] = time.split(':').map(Number);
         const selectedTimeDate = new Date();
         selectedTimeDate.setHours(hour, minute, 0, 0);
@@ -49,15 +49,12 @@ const Reagendar = () => {
         setIsLoading(true);
 
         try {
-            const userDataString = await AsyncStorage.getItem('userData');
-            if (!userDataString) throw new Error('Dados de autenticação não encontrados. Faça login novamente.');
-            
-            const userData = JSON.parse(userDataString);
-            const token = userData?.token;
+            // 3. Usar o token diretamente do contexto
+            if (!token) {
+                throw new Error('Token de autenticação inválido. Faça login novamente.');
+            }
 
-            if (!token) throw new Error('Token de autenticação inválido. Faça login novamente.');
-
-            const newIsoDate = `${selectedDate}T${selectedTime}:00.000Z`;
+            const newIsoDate = `${selectedDate}T${selectedTime}:00`;
             const payload = {
                 newAvailableDate: newIsoDate,
                 newHourClass: selectedTime,
@@ -78,7 +75,7 @@ const Reagendar = () => {
             }
         } catch (error) {
             console.error('Erro ao reagendar:', error.response?.data || error.message);
-            Alert.alert('Erro', error.message || 'Não foi possível reagendar a aula.');
+            Alert.alert('Erro', error.response?.data?.message || 'Não foi possível reagendar a aula.');
         } finally {
             setIsLoading(false);
         }
@@ -158,8 +155,8 @@ const Reagendar = () => {
                 })}
             </View>
 
-            <TouchableOpacity 
-                style={[styles.confirmButton, isLoading && styles.confirmButtonDisabled]} 
+            <TouchableOpacity
+                style={[styles.confirmButton, isLoading && styles.confirmButtonDisabled]}
                 onPress={handleConfirmReschedule}
                 disabled={isLoading}
             >
@@ -171,6 +168,7 @@ const Reagendar = () => {
     );
 };
 
+// ... (seus estilos continuam os mesmos aqui)
 const styles = StyleSheet.create({
     container: {
         flexGrow: 1,

@@ -1,126 +1,98 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react'; // REMOVIDO: useEffect e ActivityIndicator
 import { View, Text, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Link, useRouter, useLocalSearchParams } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+// REMOVIDO: import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AgendamentoAula6 = () => {
-  const [address, setAddress] = useState('Carregando endereço...');
+  // REMOVIDO: const [address, setAddress] = useState(null);
+  // REMOVIDO: const [loadingAddress, setLoadingAddress] = useState(true);
   const [metodoPagamentoSelecionado, setMetodoPagamentoSelecionado] = useState(null);
   const router = useRouter();
-  const { trainer_id, selectedDate, selectedTime } = useLocalSearchParams();
 
-  useEffect(() => {
-    const loadAddress = async () => {
-      try {
-        const savedAddress = await AsyncStorage.getItem('selectedAddress');
-        if (savedAddress !== null) {
-          setAddress(savedAddress);
-        } else {
-          setAddress('Endereço não encontrado.');
-        }
-      } catch (error) {
-        console.error('Erro ao recuperar o endereço:', error);
-        setAddress('Erro ao carregar o endereço.');
-      }
-    };
-    loadAddress();
-  }, []);
+  // MODIFICADO: Agora recebemos o 'address' diretamente dos parâmetros
+  const { trainer_id, selectedDate, selectedTime, address } = useLocalSearchParams();
+
+  // REMOVIDO: O bloco inteiro do useEffect que carregava o endereço do AsyncStorage foi removido.
 
   const handleAvancar = () => {
+    if (!metodoPagamentoSelecionado) {
+      Alert.alert('Seleção Necessária', 'Por favor, selecione uma forma de pagamento para continuar.');
+      return;
+    }
+    
+    // O objeto 'bookingDetails' agora usa o 'address' vindo diretamente dos parâmetros.
     const bookingDetails = {
       trainer_id,
       selectedDate,
       selectedTime,
-      address,
+      address, // <-- Vindo direto do useLocalSearchParams
       metodoPagamento: metodoPagamentoSelecionado,
     };
 
-    if (metodoPagamentoSelecionado === 'cartao') {
-      router.push({
-        pathname: '/page/FormaDePagamento',
-        params: bookingDetails,
-      });
-    } else if (metodoPagamentoSelecionado === 'pix') {
-      router.push({
-        pathname: '/page/AgendamentoAula7',
-        params: bookingDetails,
-      });
-    } else {
-      Alert.alert('Seleção Necessária', 'Por favor, selecione uma forma de pagamento para continuar.');
-    }
+    router.push({ pathname: '/page/AgendamentoAula7', params: bookingDetails });
   };
 
   return (
     <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
+      {/* O resto do seu código JSX continua o mesmo... */}
       <View style={styles.header}>
-        <Link href="/page/Home">
+        <TouchableOpacity onPress={() => router.push('/page/Home')}>
           <Text style={styles.closeButtonText}>X</Text>
-        </Link>
-      </View>
-
-      <Text style={styles.title}>Pagamento pelo aplicativo:</Text>
-
-      <TouchableOpacity 
-        style={[
-          styles.paymentButton, 
-          metodoPagamentoSelecionado === 'cartao' && styles.selectedButton
-        ]}
-        onPress={() => setMetodoPagamentoSelecionado('cartao')}
-      >
-        <Image source={require('../../../assets/cartaoCredito.png')} />
-        <Text style={[
-          styles.paymentButtonText,
-          metodoPagamentoSelecionado === 'cartao' && styles.selectedText
-        ]}>
-          Cartão de Crédito
-        </Text>
-      </TouchableOpacity>
-      
-      <TouchableOpacity 
-        style={[
-          styles.paymentButton, 
-          metodoPagamentoSelecionado === 'pix' && styles.selectedButton
-        ]}
-        onPress={() => setMetodoPagamentoSelecionado('pix')}
-      >
-        <Image source={require('../../../assets/pix2.png')} />
-        <Text style={[
-          styles.paymentButtonText,
-          metodoPagamentoSelecionado === 'pix' && styles.selectedText
-        ]}>
-          Pix
-        </Text>
-      </TouchableOpacity>
-      
-      <View style={styles.buttons}>
-        <TouchableOpacity style={styles.voltarButton}>
-          <Link
-            style={styles.buttonText}
-            href={{
-                pathname: "/page/Endereco1-1",
-                params: { trainer_id, selectedDate, selectedTime }
-            }}
-          >
-            Voltar
-          </Link>
         </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[
-            styles.avancarButton,
-            !metodoPagamentoSelecionado && styles.avancarButtonDisabled
-          ]} 
+      </View>
+      <Text style={styles.title}>Pagamento pelo aplicativo:</Text>
+      <View style={{ width: '90%' }}>
+        {/* MODIFICADO: Removemos o ActivityIndicator e exibimos o endereço diretamente */}
+        <Text style={{ color: '#fff', marginBottom: 20, textAlign: 'center' }}>
+          Endereço selecionado: {address || 'Endereço não fornecido'}
+        </Text>
+
+        <TouchableOpacity
+          style={[styles.paymentButton, metodoPagamentoSelecionado === 'cartao' && styles.selectedButton]}
+          onPress={() => setMetodoPagamentoSelecionado('cartao')}
+        >
+          <Image source={require('../../../assets/cartaoCredito.png')} />
+          <Text style={[styles.paymentButtonText, metodoPagamentoSelecionado === 'cartao' && styles.selectedText]}>
+            Cartão de Crédito
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.paymentButton, metodoPagamentoSelecionado === 'pix' && styles.selectedButton]}
+          onPress={() => setMetodoPagamentoSelecionado('pix')}
+        >
+          <Image source={require('../../../assets/pix2.png')} />
+          <Text style={[styles.paymentButtonText, metodoPagamentoSelecionado === 'pix' && styles.selectedText]}>
+            Pix
+          </Text>
+        </TouchableOpacity>
+      </View>
+      <View style={styles.buttons}>
+        <TouchableOpacity
+          style={styles.voltarButton}
+          onPress={() =>
+            router.push({
+              pathname: '/page/AgendamentoAula5',
+              params: { trainer_id, selectedDate, selectedTime },
+            })
+          }
+        >
+          <Text style={styles.buttonText}>Voltar</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.avancarButton, !metodoPagamentoSelecionado && styles.avancarButtonDisabled]}
           onPress={handleAvancar}
+          // MODIFICADO: A verificação de 'loadingAddress' foi removida do 'disabled'
           disabled={!metodoPagamentoSelecionado}
         >
-          <Text style={styles.buttonText}>Avançar</Text>
+          <Text style={[styles.buttonText, !metodoPagamentoSelecionado && { color: '#ddd' }]}>Avançar</Text>
         </TouchableOpacity>
       </View>
     </LinearGradient>
   );
 };
 
+// Seus estilos (styles) continuam os mesmos...
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -150,7 +122,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '90%',
+    width: '100%',
     paddingVertical: 20,
     borderRadius: 30,
     backgroundColor: 'transparent',
@@ -185,7 +157,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: '#fff',
-    color: '#FFF',
   },
   avancarButton: {
     backgroundColor: '#191970',

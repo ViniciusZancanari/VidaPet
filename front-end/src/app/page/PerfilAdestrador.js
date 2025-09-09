@@ -174,7 +174,7 @@ const PerfilAdestrador = () => {
           ))}
         </ScrollView>
       ) : (
-        <Image source={require('../../../assets/galeria1.png')} style={styles.photo} />
+        <Image source={require('../../../assets/galeria1.png')} style={styles.video} />
       )}
 
 

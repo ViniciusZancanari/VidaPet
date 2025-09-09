@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, TextInput, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, useRouter } from 'expo-router'; // Importar useRouter
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import axios from 'axios';
 
 const AgendamentoAula5 = () => {
   const [trainer, setTrainer] = useState(null);
   const [address, setAddress] = useState('');
   const { trainer_id, selectedDate, selectedTime } = useLocalSearchParams();
-  const router = useRouter(); // Inicializar o router
+  const router = useRouter();
 
   const formatDate = (dateString) => {
     if (!dateString) return '---';
@@ -24,12 +24,8 @@ const AgendamentoAula5 = () => {
   useEffect(() => {
     if (trainer_id) {
       axios.get(`https://apipet.com.br/trainer/${trainer_id}`)
-        .then(response => {
-          setTrainer(response.data);
-        })
-        .catch(error => {
-          console.error('Erro ao buscar o treinador:', error);
-        });
+        .then(response => setTrainer(response.data))
+        .catch(error => console.error('Erro ao buscar o treinador:', error));
     }
   }, [trainer_id]);
 
@@ -40,26 +36,25 @@ const AgendamentoAula5 = () => {
   const handleGoBack = () => {
     router.push({
       pathname: '/page/AgendamentoAula4',
-      params: {
-        trainer_id: trainer_id.toString(),
-        selectedDate,
-        selectedTime
-      }
+      params: { trainer_id, selectedDate, selectedTime }
     });
   };
 
   const handleGoNext = () => {
-    if (address) {
-      router.push({
-        pathname: '/page/AgendamentoAula7',
-        params: {
-          trainer_id: trainer_id.toString(),
-          selectedDate,
-          selectedTime,
-          meetingAddress: address
-        }
-      });
+    if (!address.trim()) {
+      Alert.alert('Atenção', 'Por favor, informe um endereço antes de continuar.');
+      return;
     }
+    router.push({
+      pathname: '/page/AgendamentoAula6',
+      params: {
+        trainer_id,
+        selectedDate,
+        selectedTime,
+        // MODIFICADO: O nome do parâmetro foi corrigido para 'address'
+        address: address.trim(),
+      }
+    });
   };
 
   return (
@@ -95,6 +90,8 @@ const AgendamentoAula5 = () => {
               placeholderTextColor="#999"
               value={address}
               onChangeText={setAddress}
+              autoCapitalize="words"
+              returnKeyType="done"
             />
             <View style={styles.inputUnderline} />
           </View>
@@ -106,8 +103,8 @@ const AgendamentoAula5 = () => {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.nextButton, !address && styles.nextButtonDisabled]}
-            disabled={!address}
+            style={[styles.nextButton, !address.trim() && styles.nextButtonDisabled]}
+            disabled={!address.trim()}
             onPress={handleGoNext}
           >
             <Text style={styles.buttonText}>Avançar</Text>

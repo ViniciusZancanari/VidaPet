@@ -1,11 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import {
+  View, Text, TextInput, TouchableOpacity,
+  StyleSheet, ScrollView, ActivityIndicator, Alert
+} from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { jwtDecode } from 'jwt-decode';
+import { useAuth } from '../context/AuthContext'; // ajuste se necessário
 
 const DadosUsuario = () => {
   const router = useRouter();
+  const { token } = useAuth();
 
   const [username, setUsername] = useState('');
   const [CPF, setCpf] = useState('');
@@ -26,20 +31,18 @@ const DadosUsuario = () => {
 
   useEffect(() => {
     const fetchUserData = async () => {
+      if (!token) {
+        Alert.alert('Erro', 'Usuário não autenticado.');
+        router.push('/login');
+        return;
+      }
+
       setLoading(true);
       try {
-        const userData = await AsyncStorage.getItem('userData');
-        if (!userData) throw new Error('Dados do usuário não encontrados');
+        const decoded = jwtDecode(token);
+        const userId = decoded?.sub;
 
-        const parsedUser = JSON.parse(userData);
-        const userId = parsedUser?.id;
-        const token = parsedUser?.token;
-
-        if (!userId || !token) {
-          Alert.alert('Erro', 'Usuário não autenticado.');
-          router.push('/login');
-          return;
-        }
+        if (!userId) throw new Error('ID do usuário não encontrado no token');
 
         const response = await axios.get(`https://apipet.com.br/client/${userId}`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -74,10 +77,10 @@ const DadosUsuario = () => {
     };
 
     fetchUserData();
-  }, []);
+  }, [token]);
 
   const handleAtualizar = async () => {
-    const addressParts = [endereco, enderecoN, complemento, bairro, cidade].filter(p => p && p.trim() !== '');
+    const addressParts = [endereco, enderecoN, complemento, bairro, cidade].filter(Boolean);
     const formattedAddress = addressParts.join(', ');
 
     if (!username || !email) {
@@ -99,14 +102,10 @@ const DadosUsuario = () => {
     setLoading(true);
 
     try {
-      const userData = await AsyncStorage.getItem('userData');
-      if (!userData) throw new Error('Dados do usuário não encontrados');
+      const decoded = jwtDecode(token);
+      const userId = decoded?.sub;
 
-      const parsedUser = JSON.parse(userData);
-      const userId = parsedUser?.id;
-      const token = parsedUser?.token;
-
-      if (!userId || !token) throw new Error('Usuário não autenticado');
+      if (!userId) throw new Error('ID do usuário não encontrado');
 
       const response = await axios.put(
         `https://apipet.com.br/client/${userId}`,

@@ -1,17 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import axios from 'axios';
 
 const AgendamentoAula7 = () => {
   const router = useRouter();
-  // 1. CORRIGIR o nome do parâmetro de 'meetingAddress' para 'address' para corresponder ao que é enviado
-  //    Também recebemos 'metodoPagamento' que pode ser útil no futuro.
   const { trainer_id, selectedDate, selectedTime, address, metodoPagamento } = useLocalSearchParams();
   const [trainer, setTrainer] = useState(null);
   const [loading, setLoading] = useState(true);
-
   const fixedServiceValue = 50;
 
   const formatDate = (dateString) => {
@@ -48,9 +45,9 @@ const AgendamentoAula7 = () => {
 
   const handleAlterarDados = () => {
     router.push({
-      pathname: '/page/AgendamentoAula4', // Ou a tela anterior correta para edição
+      pathname: '/page/AgendamentoAula4',
       params: {
-        trainer_id: trainer_id,
+        trainer_id: trainer_id?.toString() ?? '',
         selectedDate,
         selectedTime,
       }
@@ -58,31 +55,40 @@ const AgendamentoAula7 = () => {
   };
 
   const handleConfirmar = () => {
-    router.push({
-      pathname: '/page/AgendamentoAula8',
-      params: {
-        trainer_id: trainer_id.toString(),
-        selectedDate,
-        selectedTime,
-        // 3. PASSAR a variável 'address' corretamente para a próxima tela
-        meetingAddress: address, 
-        serviceValue: fixedServiceValue,
-        metodoPagamento: metodoPagamento, // Passando o método de pagamento adiante
-      }
-    });
+    const paramsToForward = {
+      trainer_id: trainer_id?.toString() ?? '',
+      selectedDate,
+      selectedTime,
+      address,
+      serviceValue: fixedServiceValue,
+      metodoPagamento,
+    };
+
+    if (metodoPagamento === 'cartao') {
+      router.push({
+        pathname: '/page/AgendamentoAula12',
+        params: paramsToForward,
+      });
+    } else {
+      router.push({
+        pathname: '/page/AgendamentoAula8',
+        params: paramsToForward,
+      });
+    }
   };
 
   if (loading) {
     return (
       <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
+        <ActivityIndicator size="large" color="#FFF" />
         <Text style={styles.loadingText}>Carregando...</Text>
       </LinearGradient>
     );
   }
 
   return (
-    <ScrollView>
-      <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
+    <LinearGradient colors={['#E83378', '#F47920']} style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.header}>
           <TouchableOpacity onPress={handleClose}>
             <Text style={styles.closeButtonText}>X</Text>
@@ -93,39 +99,36 @@ const AgendamentoAula7 = () => {
           <Image source={require('../../../assets/grafismo.png')} />
         </View>
 
-        <View style={styles.pixIconContainer}>
-          <Text style={styles.title}>Confirme o Pedido:</Text>
-          <Image source={require('../../../assets/profissional.png')} />
-        </View>
+        <Text style={styles.title}>Confirme o Pedido:</Text>
 
+        {/* --- Bloco Profissional --- */}
         <View style={styles.line}>
+          <Image source={require('../../../assets/profissional.png')} style={styles.iconStyle} />
           <Text style={styles.subtitle}>Profissional:</Text>
           <Text style={styles.instructions}>{trainer?.username || 'Nome não disponível'}</Text>
         </View>
 
-        <Image source={require('../../../assets/data.png')} />
+        {/* --- Bloco Data/Horário --- */}
         <View style={styles.line}>
+          <Image source={require('../../../assets/data.png')} style={styles.iconStyle} />
           <Text style={styles.subtitle}>Data/Horário:</Text>
           <Text style={styles.instructions}>
             {formatDate(selectedDate)} às {formatTime(selectedTime)}
           </Text>
         </View>
 
-        <Image source={require('../../../assets/local.png')} />
+        {/* --- Bloco Local --- */}
         <View style={styles.line}>
+          <Image source={require('../../../assets/local.png')} style={styles.iconStyle} />
           <Text style={styles.subtitle}>Local do Encontro:</Text>
-          {/* 2. USAR a variável 'address' para exibir o local */}
-          <Text style={styles.instructions}>
-            {address || 'Endereço não especificado'}
-          </Text>
+          <Text style={styles.instructions}>{address || 'Endereço não especificado'}</Text>
         </View>
 
+        {/* --- Bloco Valor --- */}
         <View style={styles.line}>
-          <Image source={require('../../../assets/valorTrainner.png')} />
+          <Image source={require('../../../assets/valorTrainner.png')} style={styles.iconStyle} />
           <Text style={styles.subtitle}>Valor do serviço:</Text>
-          <Text style={styles.instructions}>
-            R$ {fixedServiceValue.toFixed(2).replace('.', ',')}
-          </Text>
+          <Text style={styles.instructions}>R$ {fixedServiceValue.toFixed(2).replace('.', ',')}</Text>
         </View>
 
         <View style={styles.buttons}>
@@ -136,20 +139,23 @@ const AgendamentoAula7 = () => {
             <Text style={styles.buttonText}>Confirmar</Text>
           </TouchableOpacity>
         </View>
-      </LinearGradient>
-    </ScrollView>
+      </ScrollView>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  scrollContainer: {
+    flexGrow: 1,
     padding: 20,
-    width: '100%',
-    minHeight: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 120, // Adicionado para dar espaço ao conteúdo
   },
   header: {
     position: 'absolute',
@@ -162,17 +168,14 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
-  pixIconContainer: {
-    marginTop: 150,
-    marginBottom: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+  iconStyle: {
+    marginBottom: 10,
   },
   title: {
     fontSize: 24,
     color: '#FFF',
     textAlign: 'center',
-    marginBottom: 50,
+    marginBottom: 20, // Reduzido o espaçamento
   },
   subtitle: {
     fontSize: 15,
@@ -184,7 +187,6 @@ const styles = StyleSheet.create({
   instructions: {
     fontSize: 16,
     textAlign: 'center',
-    marginBottom: 30,
     color: '#FFF',
   },
   dadosButton: {
@@ -195,7 +197,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: '#fff',
-    marginBottom: 50,
   },
   line: {
     borderBottomWidth: 2,
@@ -206,10 +207,10 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   buttons: {
+    marginTop: 20, // Adicionado para dar espaço
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 50,
     width: '100%',
   },
   confirmarButton: {
@@ -217,7 +218,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 30,
-    marginBottom: 50,
     borderWidth: 3,
     borderColor: '#faac0f',
   },
@@ -231,11 +231,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 70,
     left: 0,
+    resizeMode: 'contain',
   },
   loadingText: {
     color: '#FFF',
     fontSize: 18,
     textAlign: 'center',
+    marginTop: 10,
   },
 });
 

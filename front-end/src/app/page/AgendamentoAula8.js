@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'; // Adicionado useEffect para log
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link, useRouter, useLocalSearchParams } from 'expo-router';
@@ -7,22 +7,38 @@ const AgendamentoAula8 = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
 
-  // Log para verificar todos os parâmetros recebidos
+  // Log para verificar cada parâmetro individualmente
   useEffect(() => {
-    console.log("Dados recebidos em AgendamentoAula8:", params);
+    console.log("--- Verificando parâmetros em AgendamentoAula8 ---");
+    if (Object.keys(params).length > 0) {
+      Object.entries(params).forEach(([key, value]) => {
+        console.log(`Parâmetro -> ${key}:`, value);
+      });
+    } else {
+      console.log("Nenhum parâmetro foi recebido nesta tela.");
+    }
+    console.log("----------------------------------------------------");
   }, [params]);
 
+
   const handleContinue = () => {
-    // 1. Verificação um pouco mais robusta, incluindo os novos parâmetros
-    if (!params.trainer_id || !params.selectedDate || !params.selectedTime || !params.meetingAddress || !params.metodoPagamento) {
-      Alert.alert('Erro', 'Informações do agendamento estão faltando. Por favor, volte e tente novamente.');
+    if (
+      !params.trainer_id ||
+      !params.selectedDate ||
+      !params.selectedTime ||
+      !params.address ||
+      !params.metodoPagamento
+    ) {
+      Alert.alert(
+        'Erro',
+        'Informações do agendamento estão faltando. Por favor, volte e tente novamente.'
+      );
       return;
     }
 
-    // 2. Repassar TODOS os parâmetros recebidos para a próxima tela
     router.push({
       pathname: '/page/AgendamentoAula9',
-      params: params // Envia o objeto de parâmetros inteiro, que já contém tudo o que precisamos
+      params: params,
     });
   };
 
@@ -42,26 +58,26 @@ const AgendamentoAula8 = () => {
         <View style={styles.content}>
           <View style={styles.pixIconContainer}>
             <Text style={styles.title}>Confirme o Pedido:</Text>
-            <Image 
-              source={require('../../../assets/pix.png')} 
+            <Image
+              source={require('../../../assets/pix.png')}
               style={styles.pixImage}
             />
           </View>
-          
+
           <Text style={styles.title}>Pagamento por Pix:</Text>
-          
+
           <View style={styles.stepContainer}>
             <Text style={styles.subtitle}>Passo 1</Text>
             <Text style={styles.instructions}>Copie o código que geramos pra você</Text>
           </View>
-          
+
           <View style={styles.stepContainer}>
             <Text style={styles.subtitle}>Passo 2</Text>
             <Text style={styles.instructions}>
               Abra o app do seu banco e utilize a opção "Pix Copia e Cola"
             </Text>
           </View>
-          
+
           <View style={styles.stepContainer}>
             <Text style={styles.subtitle}>Passo 3</Text>
             <View style={styles.line}>
@@ -71,7 +87,7 @@ const AgendamentoAula8 = () => {
             </View>
           </View>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.chatButton}
             onPress={handleContinue}
           >
@@ -112,10 +128,22 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
+  grafismo: {
+    width: 100,
+    height: 100,
+    position: 'absolute',
+    top: 70,
+    left: 0,
+  },
   pixIconContainer: {
     marginBottom: 30,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  pixImage: {
+    width: 100,
+    height: 100,
+    resizeMode: 'contain',
   },
   title: {
     fontSize: 24,
@@ -162,18 +190,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
-  },
-  grafismo: {
-    width: 100,
-    height: 100,
-    position: 'absolute',
-    top: 70,
-    left: 0,
-  },
-  pixImage: {
-    width: 100,
-    height: 100,
-    resizeMode: 'contain',
   },
 });
 

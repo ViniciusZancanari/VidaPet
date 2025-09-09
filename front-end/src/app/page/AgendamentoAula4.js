@@ -54,7 +54,7 @@ const AgendamentoAula4 = () => {
 
   const navigateToEnderecoCadastrado = () => {
     router.push({
-      pathname: '/page/Endereco1-1',
+      pathname: '/page/Endereco',
       params: { 
         trainer_id, // trainer_id de useLocalSearchParams já é string
         selectedDate,

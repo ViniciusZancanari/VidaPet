@@ -46,7 +46,7 @@ const AgendamentoAula5 = () => {
       return;
     }
     router.push({
-      pathname: '/page/AgendamentoAula6',
+      pathname: '/page/AgendamentoAula8',
       params: {
         trainer_id,
         selectedDate,

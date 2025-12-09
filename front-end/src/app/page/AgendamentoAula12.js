@@ -1,241 +1,199 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Picker } from '@react-native-picker/picker';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useState, useEffect } from "react";
+import { 
+  View, Text, TextInput, Button, Alert, StyleSheet, ScrollView, ActivityIndicator 
+} from "react-native";
+import axios from "axios";
+import { useAuth } from "../context/AuthContext"; 
 import { jwtDecode } from "jwt-decode";
-import axios from 'axios';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// --- PASSO 1: IMPORTAR AS FUNÇÕES DO SDK ---
-import { initMercadoPago, CardPayment } from '@mercadopago/sdk-react';
+const MERCADOPAGO_PUBLIC_KEY = "APP_USR-51bd8c40-7ffa-4ffd-aee5-aa465c479758"; 
+const API_URL = "https://apipet.com.br/payment/process"; 
 
-// --- PASSO 2: INICIALIZAR O SDK COM SUA PUBLIC KEY ---
-initMercadoPago('APP_USR-51bd8c40-7ffa-4ffd-aee5-aa465c479758', { locale: 'pt-BR' });
+export default function AgendamentoAula12({ trainingServiceId, serviceValue }) {
+  const { userToken } = useAuth(); // pega token JWT
+  const [loading, setLoading] = useState(false);
+  const [logMessage, setLogMessage] = useState("");
+  const [client, setClient] = useState(null);
+  const [trainerId, setTrainerId] = useState(null);
 
+  // Cartão
+  const [cardNumber, setCardNumber] = useState("5031 4332 1540 6351");
+  const [cardholderName, setCardholderName] = useState("APRO");
+  const [expirationMonth, setExpirationMonth] = useState("11");
+  const [expirationYear, setExpirationYear] = useState("2030");
+  const [cvv, setCvv] = useState("123");
+  const [documentNumber, setDocumentNumber] = useState("12345678909");
+  const [installments, setInstallments] = useState("1");
 
-// As funções de validação de documento ainda são úteis
-const isValidCPF = (cpf) => {
-    // ... (código da função inalterado)
-    if (typeof cpf !== 'string') return false;
-    cpf = cpf.replace(/[^\d]+/g, '');
-    if (cpf.length !== 11 || !!cpf.match(/(\d)\1{10}/)) return false;
-    cpf = cpf.split('').map(el => +el);
-    const rest = (count) => (cpf.slice(0, count - 12).reduce((soma, el, index) => soma + el * (count - index), 0) * 10) % 11 % 10;
-    return rest(10) === cpf[9] && rest(11) === cpf[10];
-};
+  const amount = serviceValue || "1.00"; // valor do serviço
 
-const isValidCNPJ = (cnpj) => {
-    // ... (código da função inalterado)
-    if (typeof cnpj !== 'string') return false;
-    cnpj = cnpj.replace(/[^\d]+/g, '');
-    if (cnpj.length !== 14 || !!cnpj.match(/(\d)\1{13}/)) return false;
-    const validate = (digits) => {
-        let index = digits.length - 7;
-        let sum = 0;
-        let pos = digits.length - 1;
-        while (pos >= 0) {
-            sum += digits[pos] * (index-- > 0 ? index : 9);
-            pos--;
-        }
-        let result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
-        return result;
-    };
-    const a = cnpj.split('').map(el => +el);
-    const b = a.slice(0, 12);
-    const dv1 = validate(b);
-    if (dv1 !== a[12]) return false;
-    b.push(dv1);
-    const dv2 = validate(b);
-    return dv2 === a[13];
-};
+  const updateLog = (message) => {
+    console.log(message);
+    setLogMessage(message);
+  };
 
-
-const AgendamentoAula12 = () => {
-    const router = useRouter();
-    const { trainer_id, selectedDate, selectedTime, address, serviceValue } = useLocalSearchParams();
-
-    // --- ESTADOS SIMPLIFICADOS ---
-    // Removemos os estados de cardNumber, expiryDate, cvv, installments
-    const [fetchedTrainerName, setFetchedTrainerName] = useState('Carregando...');
-    const [loadingUserData, setLoadingUserData] = useState(true);
-    const [isProcessing, setIsProcessing] = useState(false);
-
-    // Estados que ainda precisamos para o payload do back-end
-    const [email, setEmail] = useState('');
-    const [holderName, setHolderName] = useState('');
-    const [documentType, setDocumentType] = useState('CPF');
-    const [documentNumber, setDocumentNumber] = useState('');
-    const [nickname, setNickname] = useState('');
-
-    // useEffects para buscar dados do usuário e treinador permanecem os mesmos
-    useEffect(() => { /* ... (código do useEffect inalterado) ... */ }, [trainer_id]);
-    useEffect(() => { /* ... (código do useEffect inalterado) ... */ }, []);
-
-    // --- PASSO 3: LÓGICA DE PAGAMENTO SIMPLIFICADA ---
-    // Esta função será chamada pelo Brick QUANDO o token já tiver sido criado com sucesso.
-    const handlePaymentWithBrick = async (paymentData) => {
-        const { token, installments, payment_method_id, issuer_id } = paymentData;
-
-        // Validação dos campos que ainda são manuais
-        if (!email || !holderName || !documentNumber) {
-            Alert.alert('Erro de Validação', 'Por favor, preencha seu E-mail, Nome do Titular e Documento.');
-            return;
-        }
-        if (documentType === 'CPF' && !isValidCPF(documentNumber)) {
-            Alert.alert('Erro de Validação', 'O CPF informado é inválido.');
-            return;
-        }
-        if (documentType === 'CNPJ' && !isValidCNPJ(documentNumber)) {
-            Alert.alert('Erro de Validação', 'O CNPJ informado é inválido.');
-            return;
+  // Buscar cliente e treinador selecionado
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        if (!userToken) {
+          setClient(null);
+          return;
         }
 
-        setIsProcessing(true);
-        let trainingServiceId = null;
+        // Decodifica token para pegar ID do cliente
+        const decoded = jwtDecode(userToken);
+        const clientId = decoded?.sub;
 
-        try {
-            console.log('Criando o serviço de treinamento como pendente...');
-            const authToken = await AsyncStorage.getItem('userToken');
-            const decodedToken = jwtDecode(authToken);
-            const clientId = decodedToken.sub;
-            const formattedTime = selectedTime.includes(':') ? selectedTime : `${selectedTime}:00`;
-            const isoDate = `${selectedDate}T${formattedTime}`;
-
-            const serviceResponse = await axios.post('https://apipet.com.br/trainingService', {
-                client_id: clientId, trainer_id: trainer_id, type_payment: 'CARD', address: address,
-                hourClass: formattedTime, availableDate: isoDate, total_price: Number(serviceValue) || 50, status: "PENDING"
-            });
-            trainingServiceId = serviceResponse.data.id;
-            console.log('✅ ID do Training Service gerado:', trainingServiceId);
-            
-            // Monta o payload final para o seu back-end
-            const finalPayload = {
-                token: token,
-                installments: installments,
-                payment_method_id: payment_method_id,
-                issuer_id: issuer_id,
-                payer: {
-                    email: email,
-                    identification: { type: documentType, number: documentNumber.replace(/\D/g, '') }
-                },
-                training_service_id: trainingServiceId
-            };
-            
-            console.log('Enviando dados para processar o pagamento:', finalPayload);
-            const paymentResponse = await axios.post(
-                'https://apipet.com.br/payment/process',
-                finalPayload,
-                { headers: { 'Authorization': `Bearer ${authToken}` } }
-            );
-
-            if (paymentResponse.status === 201 || paymentResponse.status === 200) {
-                console.log('Pagamento aprovado! Atualizando status do serviço para CONFIRMED.');
-                await axios.patch(`https://apipet.com.br/trainingService/${trainingServiceId}`, { status: 'CONFIRMED' });
-                Alert.alert('Sucesso!', 'Pagamento aprovado e agendamento confirmado!',
-                    [{ text: 'OK', onPress: () => router.push('/page/Home') }]
-                );
-            }
-
-        } catch (error) {
-            console.error("Ocorreu um erro no processo:", error.response?.data || error.message);
-            const finalMessage = error.response?.data?.message || 'O pagamento foi recusado. Verifique os dados ou tente outro cartão.';
-            Alert.alert('Falha na Operação', finalMessage);
-        } finally {
-            setIsProcessing(false);
+        if (!clientId) {
+          setClient(null);
+          return;
         }
+
+        // Busca cliente na API
+        const clientRes = await axios.get(`https://apipet.com.br/client/${clientId}`, {
+          headers: { Authorization: `Bearer ${userToken}` }
+        });
+        setClient(clientRes.data);
+
+        // Recupera o trainerId salvo no AsyncStorage
+        const storedTrainerId = await AsyncStorage.getItem("selectedTrainerId");
+        if (storedTrainerId) {
+          setTrainerId(storedTrainerId);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar cliente/treinador:", error);
+        Alert.alert("Erro", "Não foi possível carregar os dados de cliente/treinador.");
+      }
     };
 
+    fetchData();
+  }, [userToken]);
 
-    if (loadingUserData) {
-        return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#ff4f84' }}>
-                <ActivityIndicator size="large" color="#FFF" />
-            </View>
-        );
+  const handlePayment = async () => {
+    if (!userToken || !client || !trainerId) {
+      Alert.alert("Erro", "Você precisa estar logado e ter selecionado um treinador para pagar.");
+      return;
     }
-    
-    // Configurações para o Brick
-    const initializationConfig = {
-        amount: Number(serviceValue) || 50,
+
+    setLoading(true);
+    updateLog("🚀 Iniciando processo de pagamento...");
+
+    try {
+      // 1. Criar token do cartão
+      const cardData = {
+        card_number: cardNumber.replace(/\D/g, ""),
+        cardholder: { name: cardholderName },
+        expiration_month: Number(expirationMonth),
+        expiration_year: Number(expirationYear),
+        security_code: cvv,
+      };
+
+      const tokenResponse = await fetch(
+        `https://api.mercadopago.com/v1/card_tokens?public_key=${MERCADOPAGO_PUBLIC_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(cardData),
+        }
+      );
+
+      const tokenData = await tokenResponse.json();
+      if (tokenData.error) {
+        updateLog(`❌ Falha ao gerar token - ${JSON.stringify(tokenData)}`);
+        Alert.alert("Erro", "Não foi possível gerar o token do cartão.");
+        setLoading(false);
+        return;
+      }
+
+      const cardToken = tokenData.id;
+
+      // 2. Obter payment_method_id
+      const bin = cardNumber.replace(/\D/g, "").slice(0, 6);
+      const pmResponse = await fetch(
+        `https://api.mercadopago.com/v1/payment_methods/search?bin=${bin}&public_key=${MERCADOPAGO_PUBLIC_KEY}`
+      );
+      const pmData = await pmResponse.json();
+
+      if (!pmData.results || pmData.results.length === 0) {
+        Alert.alert("Erro", "Não foi possível identificar a bandeira do cartão.");
+        setLoading(false);
+        return;
+      }
+
+      const payment_method_id = pmData.results[0].id;
+      const issuer_id = pmData.results[0].issuer?.id || null;
+
+      // 3. Payload do pagamento
+      const paymentData = {
+        token: cardToken,
+        installments: parseInt(installments),
+        training_service_id: trainingServiceId,
+        trainer_id: trainerId,   // 👈 vem do AsyncStorage
+        client_id: client.id,    // 👈 vem do token
+        payment_method_id,
+        issuer_id,
         payer: {
-            email: email, // Pré-preenche o e-mail no formulário do brick
+          email: client.email, // 👈 vem do cliente logado
+          identification: {
+            type: "CPF",
+            number: documentNumber.replace(/\D/g, ""),
+          },
         },
-    };
+      };
 
-    return (
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }} >
-            <ScrollView contentContainerStyle={styles.container}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.push('/page/Home')}>
-                        <Text style={styles.closeButtonText}>X</Text>
-                    </TouchableOpacity>
-                </View>
-                <Text style={styles.title}>Finalizar Pagamento</Text>
+      // 4. Enviar pagamento ao backend
+      const paymentResponse = await axios.post(API_URL, paymentData, {
+        headers: { Authorization: `Bearer ${userToken}` },
+      });
 
-                {/* CAMPOS QUE AINDA PRECISAMOS COLETAR MANUALMENTE */}
-                <TextInput style={styles.input} placeholder="E-mail" placeholderTextColor="#FFF" keyboardType="email-address" value={email} onChangeText={setEmail} />
-                <TextInput style={styles.input} placeholder="Nome do Titular (como no cartão)" placeholderTextColor="#FFF" value={holderName} onChangeText={setHolderName} />
-                <View style={styles.pickerContainer}>
-                    <Picker selectedValue={documentType} onValueChange={(itemValue) => setDocumentType(itemValue)} style={styles.picker} dropdownIconColor="#FFF">
-                        <Picker.Item label="CPF" value="CPF" />
-                        <Picker.Item label="CNPJ" value="CNPJ" />
-                    </Picker>
-                </View>
-                <TextInput style={styles.input} placeholder={documentType === 'CPF' ? 'Número do CPF' : 'Número do CNPJ'} placeholderTextColor="#FFF" keyboardType="numeric" value={documentNumber} onChangeText={setDocumentNumber} />
-                
-                {/* --- PASSO 4: ADICIONAR O COMPONENTE CardPayment ---
-                  Este componente vai renderizar todos os campos do cartão, parcelas e o botão de pagar.
-                */}
-                <View style={styles.brickContainer}>
-                    {isProcessing && <ActivityIndicator size="large" color="#191970" style={styles.brickLoading} />}
-                    <CardPayment
-                        initialization={initializationConfig}
-                        onSubmit={handlePaymentWithBrick}
-                        onReady={() => setIsProcessing(false)} // Esconde o loading quando o brick estiver pronto
-                        onError={(error) => Alert.alert("Erro", "Não foi possível carregar o formulário de pagamento.")}
-                    />
-                </View>
+      if (paymentResponse.data.status === "approved") {
+        Alert.alert("Sucesso", "Pagamento aprovado com sucesso!");
+      } else {
+        Alert.alert(
+          "Pagamento recusado",
+          `Status: ${paymentResponse.data.status}\nDetalhe: ${paymentResponse.data.detail}`
+        );
+      }
+    } catch (error) {
+      console.error("❌ Erro no pagamento:", error);
+      Alert.alert("Erro", "Ocorreu um erro no processamento do pagamento.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-                {/* O botão de voltar ainda é útil */}
-                <TouchableOpacity style={styles.voltarButton} onPress={() => router.back()}>
-                    <Text style={styles.buttonText}>Voltar</Text>
-                </TouchableOpacity>
+  return (
+    <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.title}>Pagamento com Cartão</Text>
 
-            </ScrollView>
-        </KeyboardAvoidingView>
-    );
-};
+      <TextInput style={styles.input} placeholder="Número do cartão" keyboardType="numeric" value={cardNumber} onChangeText={setCardNumber} />
+      <TextInput style={styles.input} placeholder="Nome do titular" value={cardholderName} onChangeText={setCardholderName} />
+      <View style={styles.row}>
+        <TextInput style={[styles.input, styles.halfInput]} placeholder="Mês expiração (MM)" keyboardType="numeric" value={expirationMonth} onChangeText={setExpirationMonth} />
+        <TextInput style={[styles.input, styles.halfInput]} placeholder="Ano expiração (YYYY)" keyboardType="numeric" value={expirationYear} onChangeText={setExpirationYear} />
+      </View>
+      <TextInput style={styles.input} placeholder="CVV" keyboardType="numeric" secureTextEntry value={cvv} onChangeText={setCvv} />
+      <TextInput style={styles.input} placeholder="CPF" value={documentNumber} onChangeText={setDocumentNumber} />
+      <TextInput style={styles.input} placeholder="Parcelas" keyboardType="numeric" value={installments} onChangeText={setInstallments} />
 
-// --- ESTILOS ATUALIZADOS ---
+      {loading ? (
+        <ActivityIndicator size="large" color="#007bff" style={{ marginTop: 10 }} />
+      ) : (
+        <Button title="Pagar" onPress={handlePayment} />
+      )}
+
+      <Text style={styles.log}>{logMessage}</Text>
+    </ScrollView>
+  );
+}
+
 const styles = StyleSheet.create({
-    container: { flexGrow: 1, backgroundColor: '#ff4f84', padding: 20, alignItems: 'center', width: '100%' },
-    header: { position: 'absolute', top: 40, right: 20, zIndex: 1 },
-    closeButtonText: { fontSize: 24, color: '#fff', fontWeight: 'bold' },
-    title: { color: 'white', fontSize: 22, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
-    input: { backgroundColor: 'transparent', borderColor: '#FFF', borderBottomWidth: 1, color: 'white', paddingHorizontal: 10, paddingVertical: 12, marginVertical: 10, width: '90%', fontSize: 16 },
-    pickerContainer: { width: '90%', borderColor: '#FFF', borderBottomWidth: 1, marginVertical: 10, justifyContent: 'center' },
-    picker: { color: '#FFF', backgroundColor: 'transparent' },
-    brickContainer: {
-        width: '90%',
-        marginTop: 20,
-        marginBottom: 20,
-        minHeight: 300, // Altura mínima para o brick carregar
-        justifyContent: 'center'
-    },
-    brickLoading: {
-        position: 'absolute',
-        alignSelf: 'center'
-    },
-    voltarButton: { 
-        paddingVertical: 12, 
-        paddingHorizontal: 35, 
-        borderRadius: 30, 
-        backgroundColor: 'transparent', 
-        borderWidth: 1.5, 
-        borderColor: '#fff',
-        marginTop: 20, // Espaçamento
-    },
-    buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold', textAlign: 'center' },
+  container: { padding: 20, backgroundColor: "#f9f9f9", flexGrow: 1 },
+  title: { fontSize: 20, fontWeight: "600", marginBottom: 20, textAlign: "center", color: "#333" },
+  input: { height: 50, borderColor: "#ccc", borderWidth: 1, borderRadius: 8, paddingHorizontal: 10, marginBottom: 15, backgroundColor: "#fff" },
+  row: { flexDirection: "row", justifyContent: "space-between" },
+  halfInput: { flex: 1, marginRight: 5 },
+  log: { marginTop: 20, textAlign: "center", fontStyle: "italic", color: "#555" },
 });
-
-export default AgendamentoAula12;

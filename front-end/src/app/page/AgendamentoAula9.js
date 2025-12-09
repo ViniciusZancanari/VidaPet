@@ -1,297 +1,249 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, Alert, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  ScrollView,
+  Alert,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableOpacity,
+} from 'react-native';
+import { Text, Card, ActivityIndicator } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
-import ProgressBar from '../../components/ProgressBar';
-import { useLocalSearchParams, useRouter, Link } from 'expo-router';
-import * as Clipboard from 'expo-clipboard';
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../context/AuthContext';
+import { jwtDecode } from 'jwt-decode';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+
+// Imports para o fluxo de Browser
+import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
 
 const AgendamentoAula9 = () => {
-  const [countdown, setCountdown] = useState(480);
-  const [isLoading, setIsLoading] = useState(false);
-  const [clientId, setClientId] = useState(null);
-  const router = useRouter();
-  const params = useLocalSearchParams();
+  const params = useLocalSearchParams();
+  const router = useRouter();
+  const { token } = useAuth();
+  
+  // Parâmetros recebidos da tela anterior
+  const training_service_id = params.trainingServiceId;
+  const serviceValue = params.serviceValue;
+  const trainer_id = params.trainer_id;
+  const selectedDate = params.selectedDate;
+  const selectedTime = params.selectedTime;
+  const address = params.address;
+  const metodoPagamento = params.metodoPagamento; // 'PIX' ou 'CARD'
+  
+  // Estados unificados para o fluxo de pagamento
+  const [paymentStatus, setPaymentStatus] = useState('idle'); // 'idle', 'generating', 'waiting', 'error'
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const PIX_CODE = "00020126360014BR.GOV.BCB.PIX0114+5561987654321520400005303986540410.005802BR5913Fulano de Tal6008BRASILIA62070503***6304A3A2";
+  // 
+  // GRANDE MUDANÇA: Todas as lógicas de PIX (fetchUserData, polling, renderPaymentResult, copyToClipboard)
+  // foram removidas, pois o browser cuidará de tudo.
+  //
 
-  useEffect(() => {
-    console.log("Dados recebidos em AgendamentoAula9:", params);
+  /**
+   * Função UNIFICADA para criar o pagamento e abrir o browser,
+   * seja para PIX ou Cartão.
+   */
+  const handleScheduleAndPay = async () => {
+    console.log(`Iniciando pagamento via Browser para: ${metodoPagamento}`);
+    setPaymentStatus('generating');
+    setErrorMessage('');
 
-    const fetchClientId = async () => {
-      try {
-        const userData = await AsyncStorage.getItem('userData');
-        if (userData) {
-          const { id } = JSON.parse(userData);
-          setClientId(id);
-        }
-      } catch (error) {
-        console.error('Error fetching client ID:', error);
-      }
-    };
+    let userId;
+    try {
+      const decoded = jwtDecode(token);
+      userId = decoded?.sub || decoded?.id || decoded?.userId;
+      if (!userId) throw new Error('ID do usuário inválido no token');
+    } catch (e) {
+      Alert.alert('Erro', 'Token de autenticação inválido.');
+      setPaymentStatus('idle');
+      return;
+    }
 
-    fetchClientId();
-  }, [params]);
+    // Usaremos o endpoint 'book-class' para ambos, como no código de referência
+    const backendUrl = 'https://apipet.com.br/payment/book-class';
+    const data = {
+      client_id: userId,
+      trainer_id: trainer_id,
+      total_price: parseFloat(serviceValue),
+      address: address,
+      hourClass: selectedTime,
+      availableDate: selectedDate,
+      // AQUI ESTÁ A MUDANÇA: Usamos a variável para definir o tipo
+      type_payment: metodoPagamento.toUpperCase(), // 'PIX' ou 'CARD'
+    };
 
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      setCountdown(prev => prev > 0 ? prev - 1 : 0);
-    }, 1000);
+    try {
+      console.log("--- FRONTEND: Enviando para a API ---");
+      console.log("URL:", backendUrl);
+      console.log("Body:", JSON.stringify(data, null, 2));
 
-    return () => clearInterval(intervalId);
-  }, []);
+      const response = await axios.post(backendUrl, data, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
 
-  const handleCopyPixCode = async () => {
-    await Clipboard.setStringAsync(PIX_CODE);
-    Alert.alert('Sucesso', 'Código PIX copiado!');
-  };
+      const result = response.data; // Axios aninha a resposta em .data
+      console.log("--- FRONTEND: Resposta completa da API ---", JSON.stringify(result, null, 2));
 
-  const handleCreateTrainingService = async () => {
-    try {
-      setIsLoading(true);
-      
-      if (!clientId || !params.trainer_id || !params.selectedDate || !params.selectedTime || !params.meetingAddress || !params.metodoPagamento) {
-        throw new Error('Faltando campos obrigatórios para criar o agendamento');
-      }
+      const checkoutUrl = result.init_point;
 
-      const formattedTime = params.selectedTime.includes(':') ? params.selectedTime : `${params.selectedTime}:00`;
-      const isoDate = `${params.selectedDate}T${formattedTime}:00Z`;
+      if (!checkoutUrl) {
+        throw new Error('URL de checkout (init_point) não recebida do backend.');
+      }
+      
+      setPaymentStatus('waiting');
+      
+      const redirectUrl = Linking.createURL(''); // URL de retorno para o app
+      console.log(`Aguardando redirecionamento para: ${redirectUrl}`);
 
-      const payload = {
-        client_id: clientId,
-        trainer_id: params.trainer_id,
-        // type_payment: "CARD",
-        type_payment: params.metodoPagamento.toUpperCase(),
-        address: params.meetingAddress,
-        hourClass: formattedTime,
-        availableDate: isoDate,
-        total_price: params.serviceValue ? Number(params.serviceValue) : 50,
-        status: "PENDING"
-      };
+      // Abre o navegador web (seja para PIX ou Cartão)
+      const authResult = await WebBrowser.openAuthSessionAsync(checkoutUrl, redirectUrl);
+      
+      console.log("--- RESULTADO DA SESSÃO DO NAVEGADOR ---", JSON.stringify(authResult, null, 2));
 
-      console.log("Enviando payload para a API:", payload);
+      if (authResult.type === 'success') {
+        console.log("Sessão retornou com SUCESSO. URL:", authResult.url);
+        const { queryParams } = Linking.parse(authResult.url);
+        
+        const paymentStatusQuery = queryParams?.status || queryParams?.collection_status || queryParams?.payment_status || 'failure';
+        
+        if (paymentStatusQuery === 'approved' || paymentStatusQuery === 'success') {
+            console.log('✅ Pagamento APROVADO! Navegando...');
+            Alert.alert(
+              'Pagamento Confirmado!', 
+              'Seu pagamento foi aprovado com sucesso. Vamos prosseguir com o agendamento.',
+              [{ text: 'OK', onPress: () => router.push('/page/AgendamentoAula10') }]
+            );
+        } else {
+            console.log(`Pagamento falhou ou foi pendente: ${paymentStatusQuery}`);
+            Alert.alert(
+              'Pagamento Falhou', 
+              `O status do pagamento é: ${paymentStatusQuery}. Tente novamente.`,
+              [{ text: 'OK', onPress: () => setPaymentStatus('idle') }]
+            );
+        }
+      } else {
+        console.log(`Sessão retornou com tipo: '${authResult.type}'.`);
+        Alert.alert('Pagamento Cancelado', 'Você fechou a janela de pagamento.');
+        setPaymentStatus('idle');
+      }
 
-      const response = await axios.post(
-        'https://apipet.com.br/trainingService', 
-        payload,
-        {
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+    } catch (error) {
+      const apiErrorMessage = error.response?.data?.message || error.message || 'Erro desconhecido';
+      console.error('--- FRONTEND: Erro na chamada ---', apiErrorMessage);
+      setErrorMessage(apiErrorMessage);
+      setPaymentStatus('error');
+      Alert.alert('Erro ao Gerar Pagamento', apiErrorMessage);
+    }
+  };
+  
 
-      if (response.status === 201) {
-        router.push({
-          pathname: '/page/AgendamentoAula10',
-          params: { 
-            trainingServiceId: response.data.id,
-            ...response.data
-          }
-        });
-      }
-    } catch (error) {
-      console.error('Error:', {
-        message: error.message,
-        response: error.response?.data,
-        config: error.config
-      });
-      
-      Alert.alert(
-        'Erro', 
-        error.response?.data?.message || error.message || 'Erro ao criar agendamento'
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  return (
+    <LinearGradient colors={['#E83378', '#F47920']} style={{ flex: 1 }}>
+      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <Text variant="headlineMedium" style={styles.title}>
+            {metodoPagamento === 'PIX' ? '💰 Pagamento PIX' : '💳 Pagamento com Cartão'}
+          </Text>
+          
+          <Card style={styles.agendamentoCard}>
+            <LinearGradient colors={['#F27B61', '#E83378']} style={styles.cardGradient}>
+              <Text variant="titleMedium" style={styles.agendamentoTitle}>
+                📋 Resumo do Agendamento
+              </Text>
+              <View style={styles.agendamentoInfo}>
+                <Text style={styles.agendamentoText}><Text style={styles.label}>💰 Valor: </Text>R$ {serviceValue}</Text>
+                <Text style={styles.agendamentoText}><Text style={styles.label}>📅 Data: </Text>{selectedDate}</Text>
+                <Text style={styles.agendamentoText}><Text style={styles.label}>⏰ Horário: </Text>{selectedTime}</Text>
+                <Text style={styles.agendamentoText}><Text style={styles.label}>📍 Local: </Text>{address}</Text>
+                <Text style={styles.agendamentoText}><Text style={styles.label}>💳 Método: </Text>{metodoPagamento}</Text>
+              </View>
+            </LinearGradient>
+          </Card>
 
-  const minutes = Math.floor(countdown / 60);
-  const seconds = countdown % 60;
-  const progress = ((480 - countdown) / 480) * 100;
+          {/* Card UNIFICADO para o pagamento */}
+          <Card style={styles.formCard}>
+            <LinearGradient colors={['#F47920', '#E83378']} style={styles.cardGradient}>
+              <Text style={styles.formSectionTitle}>
+                🔒 Pagamento Seguro
+              </Text>
+              <Text style={[styles.agendamentoText, {textAlign: 'center', marginBottom: 20}]}>
+                Você será redirecionado para um ambiente seguro para concluir seu pagamento.
+              </Text>
+              
+              {paymentStatus === 'idle' && (
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={handleScheduleAndPay}
+                >
+                  <Text style={styles.actionButtonText}>
+                    {metodoPagamento === 'PIX' ? 'Pagar com PIX' : 'Pagar com Cartão'}
+                  </Text>
+                </TouchableOpacity>
+              )}
 
-  return (
-    <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <LinearGradient colors={['#E83378', '#F47920']} style={styles.container}>
-        <View style={styles.header}>
-          <Link href="/page/Home">
-            <Text style={styles.closeButtonText}>X</Text>
-          </Link>
-        </View>
+              {(paymentStatus === 'generating' || paymentStatus === 'waiting') && (
+                <View style={{paddingVertical: 20, alignItems: 'center'}}>
+                  <ActivityIndicator size="large" color="#FFFFFF" />
+                  <Text style={styles.loadingText}>
+                    {paymentStatus === 'generating' ? 'Gerando link de pagamento...' : 'Aguardando no navegador...'}
+                  </Text>
+                </View>
+              )}
 
-        <View style={styles.grafismo}>
-          <Image source={require('../../../assets/grafismo.png')} />
-        </View>
+              {paymentStatus === 'error' && (
+                <View style={{alignItems: 'center'}}>
+                  <Text style={styles.errorText}>
+                    Erro: {errorMessage}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() => setPaymentStatus('idle')}
+                  >
+                    <Text style={styles.actionButtonText}>Tentar Novamente</Text>
+                  </TouchableOpacity>
+                </View>
+            )}
+            </LinearGradient>
+          </Card>
 
-        <View style={styles.content}>
-          <View style={styles.pixIconContainer}>
-            <Text style={styles.title}>Confirme Seu Pedido:</Text>
-            <Image 
-              source={require('../../../assets/segurando o celular com pix.png')} 
-              style={styles.pixImage}
-            />
-          </View>
-
-          <Text style={styles.subtitle}>Pedido aguardando pagamento</Text>
-          
-          <Text style={styles.instructions}>
-            Copie o código abaixo e use a opção "Pix Copia e Cola" no aplicativo do seu banco para realizar o pagamento:
-          </Text>
-
-          <View style={styles.pixCodeWrapper}>
-            <View style={styles.pixCodeContainer}>
-              <Text style={styles.pixCodeText}>{PIX_CODE}</Text>
-            </View>
-            <TouchableOpacity onPress={handleCopyPixCode} style={styles.copyIcon}>
-              <Image 
-                source={require('../../../assets/copy-icon.png')} 
-                style={styles.copyIconImage}
-              />
-            </TouchableOpacity>
-          </View>
-
-          <Text style={styles.timerText}>
-            Tempo restante para pagar: {minutes.toString().padStart(2, '0')}:{seconds.toString().padStart(2, '0')}
-          </Text>
-
-          <ProgressBar progress={progress} style={styles.progressBar} />
-
-          <TouchableOpacity 
-            style={[styles.button, (isLoading || !clientId) && styles.buttonDisabled]}
-            onPress={handleCreateTrainingService}
-            disabled={isLoading || !clientId}
-          >
-            <Text style={styles.buttonText}>
-              {isLoading ? 'Processando...' : 'Continuar'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </LinearGradient>
-    </ScrollView>
-  );
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </LinearGradient>
+  );
 };
 
 const styles = StyleSheet.create({
-  scrollContainer: {
-    flexGrow: 1,
-  },
-  container: {
-    flex: 1,
-    minHeight: '100%',
-    width: '100%',
-    paddingBottom: 40,
-  },
-  content: {
-    flex: 1,
-    width: '100%',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 120,
-  },
-  header: {
-    position: 'absolute',
-    top: 40,
-    right: 20,
-    zIndex: 1,
-  },
-  closeButtonText: {
-    fontSize: 24,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  grafismo: {
-    width: 100,
-    height: 100,
-    position: 'absolute',
-    top: 70,
-    left: 0,
-  },
-  pixIconContainer: {
-    marginBottom: 30,
-    alignItems: 'center',
-  },
-  pixImage: {
-    width: 150,
-    height: 150,
-    resizeMode: 'contain',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFF',
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  subtitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFF',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  instructions: {
-    fontSize: 16,
-    color: '#FFF',
-    textAlign: 'center',
-    marginBottom: 20,
-    lineHeight: 22,
-    paddingHorizontal: 20,
-  },
-  pixCodeWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '90%',
-    marginBottom: 20,
-  },
-  pixCodeContainer: {
-    backgroundColor: 'rgba(0,0,0,0.2)',
-    padding: 15,
-    borderRadius: 10,
-    flex: 1,
-  },
-  pixCodeText: {
-    color: '#FFF',
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  copyIcon: {
-    marginLeft: 10,
-    padding: 10,
-  },
-  copyIconImage: {
-    width: 24,
-    height: 24,
-    tintColor: '#FFF',
-  },
-  timerText: {
-    fontSize: 16,
-    color: '#FFF',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 15,
-  },
-  progressBar: {
-    width: '80%',
-    marginBottom: 30,
-  },
-  button: {
-    backgroundColor: '#191970',
-    paddingVertical: 15,
-    paddingHorizontal: 40,
-    borderRadius: 30,
-    borderWidth: 3,
-    borderColor: '#faac0f',
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+  container: { flex: 1, backgroundColor: 'transparent' },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
+  loadingText: { marginTop: 16, fontSize: 18, fontWeight: '600', color: '#FFFFFF', textAlign: 'center' },
+  scrollContent: { padding: 16, paddingBottom: 32 },
+  title: { textAlign: 'center', marginBottom: 20, fontWeight: 'bold', color: '#FFFFFF', fontSize: 24 },
+  agendamentoCard: { marginBottom: 20, elevation: 4, borderRadius: 12, backgroundColor: 'transparent' },
+  formCard: { marginBottom: 20, elevation: 4, borderRadius: 12, backgroundColor: 'transparent' },
+  cardGradient: { flex: 1, borderRadius: 12, padding: 16 },
+  agendamentoTitle: { fontWeight: 'bold', color: '#FFFFFF', marginBottom: 12, textAlign: 'center', fontSize: 18 },
+  agendamentoInfo: { padding: 8, backgroundColor: 'rgba(0,0,0,0.1)', borderRadius: 8 },
+  agendamentoText: { color: '#FFFFFF', fontSize: 16, marginBottom: 4 },
+  label: { fontWeight: 'bold', color: '#FFFFFF' }, 
+ formSectionTitle: { fontSize: 18, fontWeight: '600', marginBottom: 20, textAlign: "center", color: "#FFFFFF" },
+  actionButton: { backgroundColor: '#191970', paddingVertical: 15, paddingHorizontal: 30, borderRadius: 30, marginTop: 20, borderWidth: 3, borderColor: '#faac0f', alignItems: 'center', justifyContent: 'center', elevation: 3 },
+  actionButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  errorText: {
+    color: '#FFFFFF', 
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    padding: 10,
+    borderRadius: 8,
+    fontSize: 16, 
+    textAlign: 'center', 
+    marginBottom: 20, 
+    fontWeight: 'bold'
+  }
 });
 
 export default AgendamentoAula9;
